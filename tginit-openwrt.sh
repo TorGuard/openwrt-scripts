@@ -1,4 +1,5 @@
 #!/bin/sh
+# Copyright (c) 2020 TorGuard forum user 19807409
 # Example single usage: tginit.sh "VPNUsername" "VPNPass" "tgwg" "0" "0" "41820" "1420" "AA" "25" "0" "1" "1" "us-la.secureconnect.me:1443 us-la.secureconnect.me:1443 us-atl.secureconnect.me:1443" 
 # Example multi usage: tginit.sh "VPNUsername" "VPNPass" "tgwg" "0" "1" "41820" "1420" "AA" "25" "0" "0" "1" "us-la.secureconnect.me:1443" 
 # 	Info on multi usage example above: route allowed ip's is disabled for each entry, enable manually
