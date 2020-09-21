@@ -1,14 +1,17 @@
 #!/bin/sh
 # Copyright (c) 2020 TorGuard forum user 19807409
-# Example single usage: tginit.sh "VPNUsername" "VPNPass" "tgwg" "0" "0" "41820" "1420" "AA" "25" "0" "1" "1" "us-la.secureconnect.me:1443 us-la.secureconnect.me:1443 us-atl.secureconnect.me:1443" 
-# Example multi usage: tginit.sh "VPNUsername" "VPNPass" "tgwg" "0" "1" "41820" "1420" "AA" "25" "0" "0" "1" "us-la.secureconnect.me:1443" 
-# 	Info on multi usage example above: route allowed ip's is disabled for each entry, enable manually
+# Example single usage: 	tginit.sh "VPNUsername" "VPNPass" "tgwg" "0" "0" "41820" "1420" "AA" "25" "0" "1" "1" "us-la.secureconnect.me:1443" 
+# Example serverlist usage:	tginit.sh "VPNUsername" "VPNPass" "tgwg" "0" "1" "41820" "1420" "AA" "25" "0" "0" "1" "us-la.secureconnect.me:1443 us-atl.secureconnect.me:1443" 
+# 	In example about with serverlist:	route allowed ip's is disabled for each entry ass wekk as  enable manually
+#						Do not create host routes to peers enabled, please uncheck before use.
 
+# Wireguarrd key generation
 genwgkey () {
 	PRIVATE=$(wg genkey)
 	PUBLIC=$(echo "${PRIVATE}" | wg pubkey)
 }
 
+# Get TorGuard server connection info with wget
 wgettginfo () {
 	#$1 - VPN Username
 	#$2 - VPN Password
@@ -21,31 +24,20 @@ wgettginfo () {
 	TGINFO=$(wget --no-check-certificate -qO- ${URL})
 }
 
+# Get TorGuard server connection info with curl
 cgettginfo () {
-	#$1 - VPN Username
-	#$2 - VPN Password
-	#$3 - Wireguard Endpoint
-	#$4 - Wireguard Port
-	#$5 - My wireguard public key
-	#wget -O $6 --no-check-certificate https://$1:$2@$3:$4/api/v1/setup?public-key=$5
+	#$1 - VPN Username $2 - VPN Password $3 - Wireguard Endpoint $4 - Wireguard Port $5 - My wireguard public key
 	URL="https://${1}:${2}@${3}:${4}/api/v1/setup?public-key=${5}"
-	echo "API: https://$1:$2@$3:$4/api/v1/setup?public-key=$5"
+	echo "API: https://$1:$2@$3:$4/api/v1/setup?public-key=${5}"
 	TGINFO=$(curl -k ${URL})
 }
 
+# Add wireguard interface
 addwginterface () {
-	# $1 - network internaface, Example: wg0
-	# $2 - private_key
-	# $3 - listen_port
-	# $4 - addresses
-
-	# $5 - mtu
-	# $6 - fwmark
 	# add wireguard interface
 	uci delete network.${1}
 	uci commit network
 
-	
 	uci add network interface
 	uci rename network.@interface[-1]=${1}
 	uci set network.@interface[-1].proto='wireguard'
@@ -106,7 +98,7 @@ Route allowed IPs:			${11}
 TorGuard Server List:			${12}
 "
 
-# initialize vars
+# initialize vars (**TODO** delete them after cleanup)
 PRIVATE=""
 PUBLIC=""
 ENDPOINT=""
@@ -116,19 +108,26 @@ DESCRIPTION=""
 
 TMPPORT=$(( $LISTENPORT - 1 ))
 TMPFWMARK=$(printf "%x\n" $(( $(printf "%d\n" 0x${FWMARK}) - 1 )))
+TMPWGIFNR=$(( $WGIFNR - 1 ))
 for i in ${TGSERVERLIST}; do
+	# set vars
 	TMPPORT=$(( $TMPPORT + 1 ))
 	TMPFWMARK=$(printf "%x\n" $(( $(printf "%d\n" 0x${TMPFWMARK}) + 1 )))
+	TMPWGIFNR=$(( $TMPWGIFNR + 1 ))
 	DESCRIPTION="${WGINTERFACE}${WGIFNR} (TorGuard)"
 	ZONEINTERFACES=$(uci get firewall.@zone[${FIREWALLZONE}].network)
-
 	ENDPOINT=$(echo $i | awk -F'[:]' '{print $1}')
 	ENDPOINTPORT=$(echo $i | awk -F'[:]' '{print $2}')
-	genwgkey
-	wgettginfo "${VPNUSERNAME}" "${VPNPASS}" "${ENDPOINT}" "${ENDPOINTPORT}" "${PUBLIC}"
 
+	# create new private and public keys
+	genwgkey
+
+	# show private and public keys in console during the runtime
 	echo "Private: ${PRIVATE}"
 	echo "Public:  ${PUBLIC}"
+
+	# get connection information from torguard server and set variables
+	wgettginfo "${VPNUSERNAME}" "${VPNPASS}" "${ENDPOINT}" "${ENDPOINTPORT}" "${PUBLIC}"
 	WGPUBLIC=$(echo ${TGINFO} | awk -F'[,]' '{print $1}' | awk -F'[:]' '{print $2}' | sed 's/"//g') && echo "Public key: ${WGPUBLIC}"
 	SERVERIP=$(echo ${TGINFO} | awk -F'[,]' '{print $2}' | awk -F'[:]' '{print $2}' | sed 's/"//g') && echo "Peer server: ${SERVERIP}"
 	CLIENTIP=$(echo ${TGINFO} | awk -F'[,]' '{print $3}' | awk -F'[:]' '{print $2}' | sed 's/"//g') && echo "IP Addresses: ${CLIENTIP}"
@@ -137,9 +136,9 @@ for i in ${TGSERVERLIST}; do
 	WGDNS2=$(echo ${TGINFO} | awk -F'[,]' '{print $6}' | awk -F'[:]' '{print $1}' | sed 's/"//g' | sed 's/\]//g') && echo "DNS2: ${WGDNS2}"
 	WGSERVER=$(echo ${TGINFO} | awk -F'[,]' '{print $7}' | awk -F'[:]' '{print $2}' | sed 's/"//g') && echo "Endpoint host: ${WGSERVER}"
 	WGPORT=$(echo ${TGINFO} | awk -F'[,]' '{print $8}' | awk -F'[:]' '{print $2}' | sed 's/"//g' | sed 's/}//g') && echo "Endpoint Port: ${WGPORT}"
-
+	
+	# create new wireguard interface with torguards server
 	addwginterface "${WGINTERFACE}${WGIFNR}" "${PRIVATE}" "${TMPPORT}" "${CLIENTIP}" "${MTU}" "${TMPFWMARK}" "${USEBUILTINIPV6}" "${NOHOSTROUTE}" "${DESCRIPTION}" "${WGPUBLIC}" "${ALLOWEDIPS}" "${WGSERVER}" "${WGPORT}" "${KEEPALIVE}" "${ROUTEALLOWEDIPS}" "${FIREWALLZONE}" "${ZONEINTERFACES}"
-	WGIFNR=$(( $WGIFNR + 1 ))
 done
 
 /etc/init.d/firewall restart
