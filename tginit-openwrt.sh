@@ -4,7 +4,21 @@
 # Example serverlist usage:	tginit.sh "VPNUsername" "VPNPass" "tgwg" "0" "1" "41820" "1420" "AA" "25" "0" "0" "1" "us-la.secureconnect.me:1443 us-atl.secureconnect.me:1443" 
 # 	In example about with serverlist:	route allowed ip's is disabled for each entry ass wekk as  enable manually
 #						Do not create host routes to peers enabled, please uncheck before use.
-
+#
+# Download with curl:
+# 	curl -o /usr/bin/tginit.sh https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/tginit-openwrt.sh && chmod +x /usr/bin/tginit.sh
+# 	curl -o /usr/bin/tginstall.sh https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/tginstall-openwrt.sh && chmod +x /usr/bin/tginstall.sh
+#
+# Download with wget
+# 	curl -o /usr/bin/tginit.sh https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/tginit-openwrt.sh && chmod +x /usr/bin/tginit.sh
+# 	curl -o /usr/bin/tginstall.sh https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/tginstall-openwrt.sh && chmod +x /usr/bin/tginstall.sh
+#
+# Change your credentials and server:
+#	TGSERVERLIST="123.123.123.123:1443 124.125.124.125:1443"
+#	sed -i "s/YourVPNUsername/${TGUSER}/" /usr/bin/tginstall.sh
+#	sed -i "s/YourVPNPassword/${TGPASS}/" /usr/bin/tginstall.sh
+#	sed -i "s/TorguardServer1:1443 TorguardServer2:1443 TorguardServer3:1443/${TGSERVERLIST}/" /usr/bin/tginstall.sh
+#
 # Wireguarrd key generation
 genwgkey () {
 	PRIVATE=$(wg genkey)
