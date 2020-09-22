@@ -12,7 +12,7 @@ genwgkey () {
 }
 
 # Get TorGuard server connection info with wget
-wgettginfo () {
+wgetinfo () {
 	#$1 - VPN Username
 	#$2 - VPN Password
 	#$3 - Wireguard Endpoint
@@ -25,11 +25,34 @@ wgettginfo () {
 }
 
 # Get TorGuard server connection info with curl
-cgettginfo () {
+curlinfo () {
 	#$1 - VPN Username $2 - VPN Password $3 - Wireguard Endpoint $4 - Wireguard Port $5 - My wireguard public key
 	URL="https://${1}:${2}@${3}:${4}/api/v1/setup?public-key=${5}"
 	echo "API: https://$1:$2@$3:$4/api/v1/setup?public-key=${5}"
 	TGINFO=$(curl -k ${URL})
+}
+
+# get connection information from torguard server and set variables
+gettginfo () {
+	if [ -f /usr/bin/curl ]; then
+		echo "curl: OK - found: /usr/bin/curl"
+		curlinfo "${1}" "${2}" "${3}" "${4}" "${5}"
+	elif [ -f /usr/bin/wget ]; then
+		echo "wget: OK - found: /usr/bin/wget"
+		wgetinfo "${1}" "${2}" "${3}" "${4}" "${5}"
+	else
+		echo "ERROR: script requires curl or wget with ssl support
+		Install curl with:
+
+			opkg update
+			opkg install curl
+
+		or wget-ssl with:
+
+			opkg update
+			opkg install wget-ssl"
+		exit
+	fi
 }
 
 # Add wireguard interface
@@ -109,6 +132,7 @@ DESCRIPTION=""
 TMPPORT=$(( $LISTENPORT - 1 ))
 TMPFWMARK=$(printf "%x\n" $(( $(printf "%d\n" 0x${FWMARK}) - 1 )))
 TMPWGIFNR=$(( $WGIFNR - 1 ))
+
 for i in ${TGSERVERLIST}; do
 	# set vars
 	TMPPORT=$(( $TMPPORT + 1 ))
@@ -126,8 +150,8 @@ for i in ${TGSERVERLIST}; do
 	echo "Private: ${PRIVATE}"
 	echo "Public:  ${PUBLIC}"
 
-	# get connection information from torguard server and set variables
-	wgettginfo "${VPNUSERNAME}" "${VPNPASS}" "${ENDPOINT}" "${ENDPOINTPORT}" "${PUBLIC}"
+
+	gettginfo "${VPNUSERNAME}" "${VPNPASS}" "${ENDPOINT}" "${ENDPOINTPORT}" "${PUBLIC}"
 	WGPUBLIC=$(echo ${TGINFO} | awk -F'[,]' '{print $1}' | awk -F'[:]' '{print $2}' | sed 's/"//g') && echo "Public key: ${WGPUBLIC}"
 	SERVERIP=$(echo ${TGINFO} | awk -F'[,]' '{print $2}' | awk -F'[:]' '{print $2}' | sed 's/"//g') && echo "Peer server: ${SERVERIP}"
 	CLIENTIP=$(echo ${TGINFO} | awk -F'[,]' '{print $3}' | awk -F'[:]' '{print $2}' | sed 's/"//g') && echo "IP Addresses: ${CLIENTIP}"
