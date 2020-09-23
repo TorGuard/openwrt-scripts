@@ -1,23 +1,23 @@
 #!/bin/sh
 # Copyright (c) 2020 TorGuard forum user 19807409
-# Example single usage: 	tginit.sh "VPNUsername" "VPNPass" "tgwg" "0" "0" "41820" "1420" "AA" "25" "0" "1" "1" "us-la.secureconnect.me:1443" 
-# Example serverlist usage:	tginit.sh "VPNUsername" "VPNPass" "tgwg" "0" "1" "41820" "1420" "AA" "25" "0" "0" "1" "us-la.secureconnect.me:1443 us-atl.secureconnect.me:1443" 
+# Example single usage: 	tginit "VPNUsername" "VPNPass" "tgwg" "0" "0" "41820" "1420" "AA" "25" "0" "1" "1" "1.2.3.4:1443" 
+# Example serverlist usage:	tginit "VPNUsername" "VPNPass" "tgwg" "0" "1" "41820" "1420" "AA" "25" "0" "0" "1" "1.2.3.4:1443 5.6.7.8:1443 9.10.11.12:1443" 
 # 	In example about with serverlist:	route allowed ip's is disabled for each entry ass wekk as  enable manually
 #						Do not create host routes to peers enabled, please uncheck before use.
 #
 # Download with curl:
-# 	curl -o /usr/bin/tginit.sh https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/tginit-openwrt.sh && chmod +x /usr/bin/tginit.sh
-# 	curl -o /usr/bin/tginstall.sh https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/tginstall-openwrt.sh && chmod +x /usr/bin/tginstall.sh
+# 	rm -f /usr/bin/tginit;curl -o /usr/bin/tginit https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/tginit-openwrt.sh && chmod +x /usr/bin/tginit;
+# 	rm -f /usr/bin/tginstall;curl -o /usr/bin/tginstall https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/tginstall-openwrt.sh && chmod +x /usr/bin/tginstall
 #
 # Download with wget
-# 	curl -o /usr/bin/tginit.sh https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/tginit-openwrt.sh && chmod +x /usr/bin/tginit.sh
-# 	curl -o /usr/bin/tginstall.sh https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/tginstall-openwrt.sh && chmod +x /usr/bin/tginstall.sh
+# 	rm -f /usr/bin/tginit;wget -O /usr/bin/tginit https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/tginit-openwrt.sh;chmod +x /usr/bin/tginit;
+# 	rm -f /usr/bin/tginstall;wget -O /usr/bin/tginstall https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/tginstall-openwrt.sh && chmod +x /usr/bin/tginstall
 #
 # Change your credentials and server:
 #	TGSERVERLIST="123.123.123.123:1443 124.125.124.125:1443"
-#	sed -i "s/YourVPNUsername/${TGUSER}/" /usr/bin/tginstall.sh
-#	sed -i "s/YourVPNPassword/${TGPASS}/" /usr/bin/tginstall.sh
-#	sed -i "s/TorguardServer1:1443 TorguardServer2:1443 TorguardServer3:1443/${TGSERVERLIST}/" /usr/bin/tginstall.sh
+#	sed -i "s/YourVPNUsername/${TGUSER}/" /usr/bin/tginstall
+#	sed -i "s/YourVPNPassword/${TGPASS}/" /usr/bin/tginstall
+#	sed -i "s/TorguardServer1:1443 TorguardServer2:1443 TorguardServer3:1443/${TGSERVERLIST}/" /usr/bin/tginstall
 #
 # Wireguarrd key generation
 genwgkey () {
