@@ -1,0 +1,62 @@
+#!/bin/sh
+# Copyright (c) 2020 TorGuard forum user 19807409
+TGIF="${1}"
+WGIFNR="${2}"
+# 🔐 TorGuard credentials
+TGUSER=$(uci get torguard.@credentials_${TGIF}[0].username)
+TGPASS=$(uci get torguard.@credentials_${TGIF}[0].password)
+
+# 🆔 TorGuard interface
+WGIFNR=$(uci get torguard.${TGIF}.ifstartnr)
+FIREWALLZONE=$(uci get torguard.${TGIF}.zone)
+WGINTERFACE=$(uci get torguard.${TGIF}.ifname)
+NOHOSTROUTE=$(uci torguard.@interface_${TGIF}[0].nohostroute)
+LISTENPORT=$(uci get torguard.@interface_${TGIF}[0].listen_port)
+MTU=$(uci get torguard.@interface_${TGIF}[0].mtu)
+FWMARK=$(uci get torguard.@interface_${TGIF}[0].fwmark)
+KEEPALIVE=$(uci get torguard.@interface_${TGIF}[0].persistent_keepalive)
+DELEGATE=$(uci get torguard.@interface_${TGIF}[0].delegate)
+ROUTEALLOWEDIPS=$(uci get torguard.@interface_${TGIF}[0].route_allowed_ips)
+ENDPOINT=$(uci get torguard.@wireguard_${TGIF}[0].endpoint_host):$(uci get torguard.@wireguard_${TGIF}[0].endpoint_port)
+# 🛡️ Torguard server [host]:[port]
+ENPOINTPORT=$(uci get torguard.@wireguard_${TGIF}[0].endpoint_port)
+
+# ℹ️ check if torguard interface was submitted
+if [ -z ${TGIF+x} ]; then TGIF="tg0";echo "TorGuard Interface was not submited, using default: ${TGIF}"; else echo "TorGuard Interface submitted: ${TGIF}"; fi
+
+# ℹ️ check if wireguard interface number was submitted
+if [ -z ${WGIFNR+x} ]; then WGIFNR=$(uci get torguard.${TGIF}.ifstartnr);echo "Info: Wireguard Interface number was not submited, get from luci config..."; else echo "Wireguard Interface number submitted: ${WGIFNR}"; fi
+# ℹ️ check if wireguard interface number exist in /etc/config/torguard
+if [ -z ${WGIFNR+x} ]; then WGIFNR="0";echo "Warning: Wireguard Interface number not set in /etc/config/torguardm, using default value ${WGIFNR}"; else echo "Wireguard Interface number found in /etc/config/torguardm: ${WGIFNR}"; fi
+
+
+# ℹ️ Initialize luci configs and install wireguard interface
+echo "### SETTINGS ###
+TorGuard interface:             ${TGIF}
+
+### 🔐 TorGuard credentials ###
+TorGuard Username: ${TGUSER}
+TorGuard Password: ${TGPASS}
+
+
+Wireguard interface:            ${WGINTERFACE}
+🆔 Wireguard interface number:   ${WGIFNR}
+Assign to firewall zone:        ${FIREWALLZONE} (0 - lan, 1 - wan)
+Do not create routes for hosts: ${NOHOSTROUTE} (0 - creates routes for allowed hosts , 1 - does not create routes for allowed hosts)
+Listen port:                    ${LISTENPORT}
+MTU:                            ${MTU}
+Firewall mark:                  ${FWMARK}
+Use builtin IPv6-management:    ${DELEGATE}
+
+Persistent Keep Alive:          ${KEEPALIVE}
+Route Allowed IPs:              ${ROUTEALLOWEDIPS}
+Endpoint host:                  ${ENDPOINT}
+Endpoint host port:             ${ENPOINTPORT}
+🛡️ Torguard wireguard server:   ${ENDPOINT}:${ENPOINTPORT}"
+
+read -p "Continue (y/n)?" answer
+case "$answer" in 
+  y|Y ) echo "starting $0...";tginit "${TGUSER}" "${TGPASS}" "${WGINTERFACE}" "${WGIFNR}" "${NOHOSTROUTE}" "${LISTENPORT}" "${MTU}" "${FWMARK}" "${KEEPALIVE}" "${DELEGATE}" "${ROUTEALLOWEDIPS}" "${FIREWALLZONE}" "${ENDPOINT}:${ENPOINTPORT}";;
+  n|N ) echo "user abort, script finished";;
+  * ) echo "invalid";;
+esac
