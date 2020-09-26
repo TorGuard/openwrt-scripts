@@ -1,6 +1,10 @@
 #!/bin/sh
 # Copyright (c) 2020 TorGuard forum user 19807409
 # requirement: opkg install iperf3 (apt install iperf3)
+# iperf.wifx.net 5200 bis 5209, additional ports 1080, 8080, 3128, 1197, 1198, more info on https://speedtest.wtnet.de/
+# iperf servers:    https://iperf.cc/
+#                   https://iperf.fr/iperf-servers.php
+
 iperftcpdefault () {
     for url in $1; do
         for port in $2; do
