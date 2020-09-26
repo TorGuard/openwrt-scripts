@@ -1,0 +1,654 @@
+{
+   "serverSites" : {
+      "SGP" : {
+         "Singapore 2" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "sg2.secureconnect.me",
+               "sg2.torguard.org"
+            ]
+         },
+         "Singapore 1" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "sg.secureconnect.me",
+               "sg.torguard.org"
+            ]
+         }
+      },
+      "ISR" : {
+         "Tel Aviv" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "isr-loc1.secureconnect.me",
+               "isr-loc1.torguard.org"
+            ]
+         }
+      },
+      "NOR" : {
+         "Oslo" : {
+            "servers" : [
+               "no.secureconnect.me",
+               "no.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      },
+      "ITA" : {
+         "Milan" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "it.secureconnect.me",
+               "it.torguard.org"
+            ]
+         }
+      },
+      "LUX" : {
+         "Steinsel" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "lux.secureconnect.me",
+               "lux.torguard.org"
+            ]
+         }
+      },
+      "CHL" : {
+         "Vina del Mar" : {
+            "servers" : [
+               "ch.secureconnect.me",
+               "ch.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      },
+      "TUR" : {
+         "Istanbul" : {
+            "servers" : [
+               "tk.secureconnect.me"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      },
+      "GBR" : {
+         "London" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "uk.secureconnect.me",
+               "uk.torguard.org"
+            ]
+         }
+      },
+      "AUT" : {
+         "Vienna" : {
+            "servers" : [
+               "aus.secureconnect.me",
+               "aus.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      },
+      "DNK" : {
+         "Copenhagen" : {
+            "servers" : [
+               "dn.secureconnect.me",
+               "dn.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      },
+      "UKR" : {
+         "Kyiv" : {
+            "servers" : [
+               "ukr.secureconnect.me",
+               "ukr.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      },
+      "LVA" : {
+         "Riga" : {
+            "servers" : [
+               "lv.secureconnect.me",
+               "lv.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      },
+      "NLD" : {
+         "Amsterdam" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "nl.secureconnect.me",
+               "nl.torguard.org"
+            ]
+         }
+      },
+      "BRA" : {
+         "Sao Paulo 2" : {
+            "servers" : [
+               "br2.secureconnect.me",
+               "br2.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         },
+         "Sao Paulo 1" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "br.secureconnect.me",
+               "br.torguard.org"
+            ]
+         }
+      },
+      "MDA" : {
+         "Chisinau" : {
+            "servers" : [
+               "md.secureconnect.me",
+               "md.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      },
+      "AUS" : {
+         "Sydney 2" : {
+            "servers" : [
+               "au2.secureconnect.me",
+               "au2.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         },
+         "Sydney 1" : {
+            "servers" : [
+               "au.secureconnect.me",
+               "au.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      },
+      "SWE" : {
+         "Stockholm" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "swe.secureconnect.me",
+               "swe.torguard.org"
+            ]
+         }
+      },
+      "DEU" : {
+         "Munich" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "ger-munich.secureconnect.me",
+               "ger-munich.torguard.org"
+            ]
+         },
+         "Frankfurt" : {
+            "servers" : [
+               "ger.secureconnect.me",
+               "ger.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      },
+      "GRC" : {
+         "Athens" : {
+            "servers" : [
+               "gre.secureconnect.me",
+               "gre.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      },
+      "FIN" : {
+         "Helsinki" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "fn.secureconnect.me",
+               "fn.torguard.org"
+            ]
+         }
+      },
+      "KOR" : {
+         "Seoul" : {
+            "servers" : [
+               "sk.secureconnect.me",
+               "sk.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      },
+      "BGR" : {
+         "Sofia" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "bul.secureconnect.me",
+               "bul.torguard.org"
+            ]
+         }
+      },
+      "BEL" : {
+         "Brussels" : {
+            "servers" : [
+               "bg.secureconnect.me",
+               "bg.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      },
+      "JPN" : {
+         "Tokyo" : {
+            "servers" : [
+               "jp.secureconnect.me",
+               "jp.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      },
+      "THA" : {
+         "Bangkok" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "th.secureconnect.me",
+               "th.torguard.org"
+            ]
+         }
+      },
+      "CAN" : {
+         "Vancouver" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "cavan.secureconnect.me",
+               "cavan.torguard.org"
+            ]
+         },
+         "Toronto" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "ca.secureconnect.me",
+               "ca.torguard.org"
+            ]
+         }
+      },
+      "ESP" : {
+         "Madrid" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "sp.secureconnect.me",
+               "sp.torguard.org"
+            ]
+         }
+      },
+      "ZAF" : {
+         "Johannesburg" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "sa.secureconnect.me"
+            ]
+         }
+      },
+      "MEX" : {
+         "Mexico City" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "mx.secureconnect.me",
+               "mx.torguard.org"
+            ]
+         }
+      },
+      "IRL" : {
+         "Dublin" : {
+            "servers" : [
+               "ire.secureconnect.me",
+               "ire.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      },
+      "IDN" : {
+         "Jakarta" : {
+            "servers" : [
+               "id.secureconnect.me",
+               "id.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      },
+      "POL" : {
+         "Warsaw" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "pl.secureconnect.me",
+               "pl.torguard.org"
+            ]
+         }
+      },
+      "TWN" : {
+         "Taipei" : {
+            "servers" : [
+               "tw.secureconnect.me",
+               "tw.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      },
+      "SVK" : {
+         "Bratislava" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "slk.secureconnect.me",
+               "slk.torguard.org"
+            ]
+         }
+      },
+      "HKG" : {
+         "Hong Kong" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "hk.secureconnect.me",
+               "hk.torguard.org"
+            ]
+         }
+      },
+      "CZE" : {
+         "Prague" : {
+            "servers" : [
+               "cz.secureconnect.me",
+               "cz.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      },
+      "CHE" : {
+         "Zurich" : {
+            "servers" : [
+               "swiss.secureconnect.me",
+               "swiss.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      },
+      "IND" : {
+         "Bangalore" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "in.secureconnect.me",
+               "in.torguard.org"
+            ]
+         }
+      },
+      "FRA" : {
+         "Paris" : {
+            "servers" : [
+               "fr.secureconnect.me",
+               "fr.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      },
+      "ROM" : {
+         "Bucharest" : {
+            "servers" : [
+               "ro.secureconnect.me",
+               "ro.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      },
+      "NZL" : {
+         "Auckland" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "nz.secureconnect.me",
+               "nz.torguard.org"
+            ]
+         }
+      },
+      "ISL" : {
+         "Reykjavik" : {
+            "servers" : [
+               "ice.secureconnect.me",
+               "ice.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      },
+      "RUS" : {
+         "Moscow" : {
+            "servers" : [
+               "ru.secureconnect.me",
+               "ru.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      },
+      "ARE" : {
+         "Dubai" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "uae.secureconnect.me",
+               "uae.torguard.org"
+            ]
+         }
+      },
+      "PRT" : {
+         "Lisbon" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "pg.secureconnect.me",
+               "pg.torguard.org"
+            ]
+         }
+      },
+      "HUN" : {
+         "Budapest" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "hg.secureconnect.me",
+               "hg.torguard.org"
+            ]
+         }
+      },
+      "USA" : {
+         "Los Angeles" : {
+            "servers" : [
+               "us-la.secureconnect.me",
+               "us-la.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         },
+         "Las Vegas" : {
+            "servers" : [
+               "us-lv.secureconnect.me",
+               "us-lv.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         },
+         "Atlanta" : {
+            "servers" : [
+               "us-atl.secureconnect.me",
+               "us-atl.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         },
+         "Dallas" : {
+            "servers" : [
+               "us-dal.secureconnect.me",
+               "us-dal.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         },
+         "New Jersey" : {
+            "servers" : [
+               "us-nj.secureconnect.me",
+               "us-nj.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         },
+         "Miami" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "us-fl.secureconnect.me",
+               "us-fl.torguard.org"
+            ]
+         },
+         "Chicago" : {
+            "servers" : [
+               "us-chi.secureconnect.me",
+               "us-chi.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         },
+         "Salt Lake City" : {
+            "servers" : [
+               "us-slc.secureconnect.me",
+               "us-slc.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         },
+         "Seattle" : {
+            "servers" : [
+               "us-sa.secureconnect.me",
+               "us-sa.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         },
+         "San Francisco" : {
+            "ports" : [
+               1443
+            ],
+            "servers" : [
+               "us-sf.secureconnect.me",
+               "us-sf.torguard.org"
+            ]
+         },
+         "New York" : {
+            "servers" : [
+               "us-ny.secureconnect.me",
+               "us-ny.torguard.org"
+            ],
+            "ports" : [
+               1443
+            ]
+         }
+      }
+   }
+}
