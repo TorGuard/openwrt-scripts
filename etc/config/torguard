@@ -1,0 +1,123 @@
+
+config serverlist
+	option json '/etc/torguard/wireguard.json'
+
+config torguard 'tg0'
+	option ifname='wg'
+	option ifstartnr='0'
+	option zone '1'
+
+config credentials_tg0
+	option username ''
+	option password ''
+
+config interface_tg0
+	option proto 'wireguard'
+	option private_key ''
+	option listen_port '51820'
+	list addresses ''
+	option mtu '1420'
+	option fwmark '0xFE'
+	option delegate '0'
+	option nohostroute '0'
+
+config wireguard_wg0
+	option description 'TorGuard - United States (New York)'
+	option public_key ''
+	list allowed_ips '0.0.0.0/0'
+	option endpoint_host '173.244.200.119'
+	option endpoint_port '1443'
+	option persistent_keepalive '25'
+	option route_allowed_ips '1'
+
+config specification 'spec_wireguard_proto'
+	list proto 'udp'
+	
+config specification 'spec_wireguard_ports'
+	list port '1443'
+
+config specification 'spec_openvpn_proto'
+	list proto 'udp'
+	list proto 'tcp'
+
+config specification 'spec_openvpn_ports'
+	list port '22'
+	list port '53'
+	list port '80'
+	list port '389'
+	list port '501'
+	list port '443'
+	list port '995'
+	list port '1195'
+	list port '1198'
+	list port '1215'
+	list port '1912'
+	list port '4443'
+	list port '9201'
+
+config specification 'spec_openvpn_cipher'
+	list cipher 'aes-128-gcm'
+
+config specification 'spec_openvpn_auth'
+	list auth 'sha1'
+	list auth 'sha256'
+	list auth 'sha512'
+
+config specification 'spec_oc'
+	list proto 'tcp'
+	list proto 'udp'
+	list port '443'
+
+config specification 'spec_dns_us1'
+	option name 'TorGuard Public DNS - USA'
+	list dns 104.223.91.194,104.223.91.210
+
+config specification 'spec_dns_cloudflare'
+	option name 'Cloudflare'
+	list dns '1.1.1.1,1.0.0.1'
+
+config specification 'spec_dns_google'
+	option name 'Google'
+	list dns '8.8.8.8,8.8.4.4'
+
+config specification 'spec_dns_opendns'
+	option name 'Level3'
+	list dns '4.2.2.2,4.2.2.3'
+
+config specification 'spec_dns_opendns'
+	option name 'OpenDNS'
+	list dns '208.67.222.222,208.67.220.220'
+
+config specification 'spec_dns_quad9'
+	option name 'Quad9'
+	list dns '9.9.9.9'
+
+config specification 'spec_proxy_hostnames'
+	list hostname 'proxy.torguard.org'
+	list hostname 'proxy.torguard.io'
+	list hostname 'proxy.secureconnect.me'
+
+config specification 'spec_socks5'
+	list port '1080'
+	list port '1085'
+	list port '1090'
+
+config specification 'spec_proxy_http'
+	list port '6060'
+	list port '1337'
+	list port '1338'
+	list port '1339'
+	list port '1340'
+	list port '1341'
+	list port '1342'
+	list port '1343'
+
+config specification 'spec_proxy_ssl'
+	list port '23'
+	list port '592'
+	list port '778'
+	list port '489'
+	list port '282'
+	list port '993'
+	list port '465'
+	list port '7070'
