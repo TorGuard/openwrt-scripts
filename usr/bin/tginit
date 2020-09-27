@@ -114,7 +114,8 @@ WGIFNR="${4}"			# Wireguard interface number, default 0
 NOHOSTROUTE="${5}"		# Optional. Do not create host routes to peers, default 0
 LISTENPORT="${6}"		# Optional. UDP port used for outgoing and incoming packets.
 MTU="${7}"			# Optional. Maximum Transmission Unit of tunnel interface.
-FWMARK="${8}"			# Optional. 32-bit mark for outgoing encrypted packets. Enter value in hex, starting with 0x.
+# Optional. 32-bit mark for outgoing encrypted packets. Enter value in hex, starting with 0x. Default: 0xFE
+if [ -z ${8+x} ]; then echo "FWMARK was not submited, using dummy value 0xFE" FWMARK="0xFE"; else FWMARK="${8}"; fi
 KEEPALIVE="${9}"		# Optional. Seconds between keep alive messages. Default is 0 (disabled). Recommended value if this device is behind a NAT is 25.
 USEBUILTINIPV6="${10}"		# Use builtin IPv6-management	0 to disable, 1 to enable
 ROUTEALLOWEDIPS="${11}"	# Route allowed IPs, 0 to disable, 1 to enable
@@ -143,7 +144,7 @@ TGINFO=""
 DESCRIPTION=""
 
 TMPPORT=$(( $LISTENPORT - 1 ))
-TMPFWMARK=$(printf "%x\n" $(( $(printf "%d\n" 0x${FWMARK}) - 1 )))
+TMPFWMARK=$(printf "%x\n" $(( $(printf "%d\n" ${FWMARK}) - 1 )))
 TMPWGIFNR=$(( $WGIFNR - 1 ))
 
 for i in ${TGSERVERLIST}; do

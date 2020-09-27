@@ -1,7 +1,9 @@
 #!/bin/sh
 # Copyright (c) 2020 TorGuard forum user 19807409
-TGIF="${1}"
-WGIFNR="${2}"
+# ℹ️ check submitted vars
+if [ -z ${1+x} ]; then TGIF="tg0" && echo "TorGuard Interface was not submited, using default: ${TGIF}"; else TGIF="${1}" && echo "TorGuard Interface submitted: ${TGIF}"; fi
+if [ -z ${2+x} ]; then WGIFNR="0" && echo "WireGuard Interface Number was not submited, using default: ${WGIFNR}"; else WGIFNR="${1}" && echo "TorGuard Interface submitted: ${WGIFNR}"; fi
+
 # 🔐 TorGuard credentials
 TGUSER=$(uci get torguard.@credentials_${TGIF}[0].username)
 TGPASS=$(uci get torguard.@credentials_${TGIF}[0].password)
@@ -20,15 +22,6 @@ ROUTEALLOWEDIPS=$(uci get torguard.@interface_${TGIF}[0].route_allowed_ips)
 ENDPOINT=$(uci get torguard.@wireguard_${TGIF}[0].endpoint_host):$(uci get torguard.@wireguard_${TGIF}[0].endpoint_port)
 # 🛡️ Torguard server [host]:[port]
 ENPOINTPORT=$(uci get torguard.@wireguard_${TGIF}[0].endpoint_port)
-
-# ℹ️ check if torguard interface was submitted
-if [ -z ${TGIF+x} ]; then TGIF="tg0";echo "TorGuard Interface was not submited, using default: ${TGIF}"; else echo "TorGuard Interface submitted: ${TGIF}"; fi
-
-# ℹ️ check if wireguard interface number was submitted
-if [ -z ${WGIFNR+x} ]; then WGIFNR=$(uci get torguard.${TGIF}.ifstartnr);echo "Info: Wireguard Interface number was not submited, get from luci config..."; else echo "Wireguard Interface number submitted: ${WGIFNR}"; fi
-# ℹ️ check if wireguard interface number exist in /etc/config/torguard
-if [ -z ${WGIFNR+x} ]; then WGIFNR="0";echo "Warning: Wireguard Interface number not set in /etc/config/torguardm, using default value ${WGIFNR}"; else echo "Wireguard Interface number found in /etc/config/torguardm: ${WGIFNR}"; fi
-
 
 # ℹ️ Initialize luci configs and install wireguard interface
 echo "### SETTINGS ###
