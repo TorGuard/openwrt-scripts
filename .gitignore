@@ -1,1 +1,4 @@
 .vscode/
+*.sh
+*-old
+*.old
