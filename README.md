@@ -4,7 +4,7 @@ TorGuard related OpenWRT scripts
 - [openwrt-scripts](#openwrt-scripts)
   - [TorGuard Wireguard Installation](#torguard-wireguard-installation)
     - [download and install with wget](#download-and-install-with-wget)
-    - [download install with curl](#download-install-with-curl)
+    - [download and install with curl](#download-and-install-with-curl)
   - [Script descriptions](#script-descriptions)
     - [tginstall](#tginstall)
     - [tginit](#tginit)
@@ -24,7 +24,7 @@ wget -O /usr/bin/tginstall https://github.com/TorGuard/openwrt-scripts/raw/maste
 chmod +x /usr/bin/tginstall && tginstall
 ```
 
-### download install with curl
+### download and install with curl
 
 ```shell
 curl -o /usr/bin/tginstall https://github.com/TorGuard/openwrt-scripts/raw/master/usr/bin/tginstall
