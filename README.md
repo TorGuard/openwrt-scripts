@@ -73,6 +73,6 @@ wget -O /etc/config/speedperf https://github.com/TorGuard/openwrt-scripts/raw/ma
 # Get speedperf config
 wget -O /usr/bin/speedperf https://github.com/TorGuard/openwrt-scripts/raw/master/usr/bin/speedperf
 
-# set speeperf bin as executable
+# set speedperf bin as executable
 chmod +x /usr/bin/speedperf
 ```
