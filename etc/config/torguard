@@ -21,7 +21,7 @@ config interface_tg0
 	option delegate '0'
 	option nohostroute '0'
 
-config wireguard_wg0
+config wireguard_tg0
 	option description 'TorGuard - United States (New York)'
 	option public_key ''
 	list allowed_ips '0.0.0.0/0'

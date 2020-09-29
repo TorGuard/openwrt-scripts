@@ -61,7 +61,7 @@ else
   case "$askserv" in 
     y|Y ) read -p "Set your server: " setserv;
           # US New York server is preset, here you can set your streaming/residential IP
-          uci set torguard.@wireguard_tg0[0].endpoint_host="$setserv";;
+          uci set torguard.@wireguard_wg0[0].endpoint_host="$setserv";;
     n|N ) echo "using default script server";;
     * ) echo "invalid"; exit;;
   esac
@@ -85,7 +85,7 @@ MTU=$(uci get torguard.@interface_${TGIF}[0].mtu)
 FWMARK=$(uci get torguard.@interface_${TGIF}[0].fwmark)
 KEEPALIVE=$(uci get torguard.@interface_${TGIF}[0].persistent_keepalive)
 DELEGATE=$(uci get torguard.@interface_${TGIF}[0].delegate)
-ROUTEALLOWEDIPS=$(uci get torguard.@interface_${TGIF}[0].route_allowed_ips)
+ROUTEALLOWEDIPS=$(uci get torguard.@wireguard_${TGIF}[0].route_allowed_ips)
 ENDPOINT=$(uci get torguard.@wireguard_${TGIF}[0].endpoint_host):$(uci get torguard.@wireguard_${TGIF}[0].endpoint_port)
 # 🛡️ Torguard server [host]:[port]
 ENPOINTPORT=$(uci get torguard.@wireguard_${TGIF}[0].endpoint_port)
