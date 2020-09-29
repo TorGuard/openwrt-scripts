@@ -57,7 +57,7 @@ else
     n|N ) echo "user abort, script finished"; exit;;
     * ) echo "invalid"; exit;;
   esac
-  read -p "Per default New York server is preset, do you want to set your rsidential/streaming/...?" askserv
+  read -p "Per default New York server is preset, do you want to set your residential/streaming/...?" askserv
   case "$askserv" in 
     y|Y ) read -p "Set your server: " setserv
           uci set torguard.@wireguard_${TGIF}[0].endpoint_host="$setserv";;
@@ -107,9 +107,10 @@ Use builtin IPv6-management:    ${DELEGATE}
 
 Persistent Keep Alive:          ${KEEPALIVE}
 Route Allowed IPs:              ${ROUTEALLOWEDIPS}
+
+🛡️ Torguard wireguard server: 
 Endpoint host:                  ${ENDPOINT}
 Endpoint host port:             ${ENPOINTPORT}
-🛡️ Torguard wireguard server:   ${ENDPOINT}:${ENPOINTPORT}
 
 Install openwrt dependencies:   ${DEPS}"
 
