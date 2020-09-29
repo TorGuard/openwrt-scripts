@@ -2,7 +2,6 @@
 # Copyright (c) 2020 TorGuard forum user 19807409
 # tginstall (Optional: [TorGuardConfigInterface] [WireGuardInterfaceNumber])
 # Example: tginstall tg0 0
-
 # ℹ️ check submitted vars
 if [ -z ${1+x} ]; then TGIF="tg0" && echo "TorGuard Interface was not submited, using default: ${TGIF}"; else TGIF="${1}" && echo "TorGuard Interface submitted: ${TGIF}"; fi
 if [ -z ${2+x} ]; then WGIFNR="0" && echo "WireGuard Interface Number was not submited, using default: ${WGIFNR}"; else WGIFNR="${1}" && echo "TorGuard Interface submitted: ${WGIFNR}"; fi
@@ -28,26 +27,6 @@ else
   exit
 fi
 
-# 🔐 TorGuard credentials
-TGUSER=$(uci get torguard.@credentials_${TGIF}[0].username)
-TGPASS=$(uci get torguard.@credentials_${TGIF}[0].password)
-
-# 🆔 TorGuard interface
-WGIFNR=$(uci get torguard.${TGIF}.ifstartnr)
-FIREWALLZONE=$(uci get torguard.${TGIF}.zone)
-WGINTERFACE=$(uci get torguard.${TGIF}.ifname)
-NOHOSTROUTE=$(uci torguard.@interface_${TGIF}[0].nohostroute)
-LISTENPORT=$(uci get torguard.@interface_${TGIF}[0].listen_port)
-MTU=$(uci get torguard.@interface_${TGIF}[0].mtu)
-FWMARK=$(uci get torguard.@interface_${TGIF}[0].fwmark)
-KEEPALIVE=$(uci get torguard.@interface_${TGIF}[0].persistent_keepalive)
-DELEGATE=$(uci get torguard.@interface_${TGIF}[0].delegate)
-ROUTEALLOWEDIPS=$(uci get torguard.@interface_${TGIF}[0].route_allowed_ips)
-ENDPOINT=$(uci get torguard.@wireguard_${TGIF}[0].endpoint_host):$(uci get torguard.@wireguard_${TGIF}[0].endpoint_port)
-# 🛡️ Torguard server [host]:[port]
-ENPOINTPORT=$(uci get torguard.@wireguard_${TGIF}[0].endpoint_port)
-DEPS="kmod-wireguard wireguard-tools"
-
 # ℹ️ Initialize luci configs and install wireguard interface
 if [ -f /usr/bin/tginit-uci-basic ]; then
   echo "Found: /usr/bin/tginit-uci-basic"
@@ -68,7 +47,47 @@ if [ -f /etc/config/torguard ]; then
 else
   echo "Initialize torguard config file"
   tginit-uci-basic
+  echo "Please set your torguard credentials which are require for API usage"
+  read -p 'Set Username: ' TORGUARDUSERNAME
+  #read -sp 'Set Password: ' TORGUARDPASS
+  read -p 'Set Password: ' TORGUARDPASS 
+  read -p "Continue (y/n)?" setcred
+  case "$setcred" in 
+    y|Y ) uci set torguard.@credentials_tg0[0].username="$TORGUARDUSERNAME";uci set torguard.@credentials_tg0[0].password="$TORGUARDPASS";uci commit torguard;;
+    n|N ) echo "user abort, script finished"; exit;;
+    * ) echo "invalid"; exit;;
+  esac
+  read -p "Per default New York server is preset, do you want to set your rsidential/streaming/...?" askserv
+  case "$askserv" in 
+    y|Y ) read -p "Set your server: " setserv;
+          # US New York server is preset, here you can set your streaming/residential IP
+          uci set torguard.@wireguard_tg0[0].endpoint_host="$setserv";;
+    n|N ) echo "using default script server";;
+    * ) echo "invalid"; exit;;
+  esac
 fi
+
+# OPKG Dependencies
+DEPS="kmod-wireguard wireguard-tools"
+
+# 🔐 TorGuard credentials
+TGUSER=$(uci get torguard.@credentials_${TGIF}[0].username)
+TGPASS=$(uci get torguard.@credentials_${TGIF}[0].password)
+
+# 🆔 TorGuard interface
+WGIFNR=$(uci get torguard.${TGIF}.ifstartnr)
+FIREWALLZONE=$(uci get torguard.${TGIF}.zone)
+WGINTERFACE=$(uci get torguard.${TGIF}.ifname)
+NOHOSTROUTE=$(uci torguard.@interface_${TGIF}[0].nohostroute)
+LISTENPORT=$(uci get torguard.@interface_${TGIF}[0].listen_port)
+MTU=$(uci get torguard.@interface_${TGIF}[0].mtu)
+FWMARK=$(uci get torguard.@interface_${TGIF}[0].fwmark)
+KEEPALIVE=$(uci get torguard.@interface_${TGIF}[0].persistent_keepalive)
+DELEGATE=$(uci get torguard.@interface_${TGIF}[0].delegate)
+ROUTEALLOWEDIPS=$(uci get torguard.@interface_${TGIF}[0].route_allowed_ips)
+ENDPOINT=$(uci get torguard.@wireguard_${TGIF}[0].endpoint_host):$(uci get torguard.@wireguard_${TGIF}[0].endpoint_port)
+# 🛡️ Torguard server [host]:[port]
+ENPOINTPORT=$(uci get torguard.@wireguard_${TGIF}[0].endpoint_port)
 
 echo "### SETTINGS ###
 TorGuard interface:             ${TGIF}
@@ -99,6 +118,6 @@ case "$answer" in
   y|Y ) echo "starting $0...";
         opkg update && opkg install ${DEPS};
         tginit "${TGUSER}" "${TGPASS}" "${WGINTERFACE}" "${WGIFNR}" "${NOHOSTROUTE}" "${LISTENPORT}" "${MTU}" "${FWMARK}" "${KEEPALIVE}" "${DELEGATE}" "${ROUTEALLOWEDIPS}" "${FIREWALLZONE}" "${ENDPOINT}:${ENPOINTPORT}";;
-  n|N ) echo "user abort, script finished";;
-  * ) echo "invalid";;
+  n|N ) echo "user abort, script finished"; exit;;
+  * ) echo "invalid"; exit;;
 esac
