@@ -1,8 +1,32 @@
 #!/bin/sh
 # Copyright (c) 2020 TorGuard forum user 19807409
+# tginstall (Optional: [TorGuardConfigInterface] [WireGuardInterfaceNumber])
+# Example: tginstall tg0 0
+
 # ℹ️ check submitted vars
 if [ -z ${1+x} ]; then TGIF="tg0" && echo "TorGuard Interface was not submited, using default: ${TGIF}"; else TGIF="${1}" && echo "TorGuard Interface submitted: ${TGIF}"; fi
 if [ -z ${2+x} ]; then WGIFNR="0" && echo "WireGuard Interface Number was not submited, using default: ${WGIFNR}"; else WGIFNR="${1}" && echo "TorGuard Interface submitted: ${WGIFNR}"; fi
+
+# use curl or wget
+if [ -f /usr/bin/curl ]; then
+  echo "curl: OK - found: /usr/bin/curl"
+  DBIN="/usr/bin/curl -o"
+elif [ -f /usr/bin/wget ]; then
+  echo "wget: OK - found: /usr/bin/wget, download init script"
+  DBIN="/usr/bin/wget -O"
+else
+  DBIN="ERROR: script requires curl or wget with ssl support" &&  echo "$DBIN
+  Install curl with:
+
+    opkg update
+    opkg install curl
+
+  or wget-ssl with:
+
+    opkg update
+    opkg install wget-ssl"
+  exit
+fi
 
 # 🔐 TorGuard credentials
 TGUSER=$(uci get torguard.@credentials_${TGIF}[0].username)
@@ -22,15 +46,36 @@ ROUTEALLOWEDIPS=$(uci get torguard.@interface_${TGIF}[0].route_allowed_ips)
 ENDPOINT=$(uci get torguard.@wireguard_${TGIF}[0].endpoint_host):$(uci get torguard.@wireguard_${TGIF}[0].endpoint_port)
 # 🛡️ Torguard server [host]:[port]
 ENPOINTPORT=$(uci get torguard.@wireguard_${TGIF}[0].endpoint_port)
+DEPS="kmod-wireguard wireguard-tools"
 
 # ℹ️ Initialize luci configs and install wireguard interface
+if [ -f /usr/bin/tginit-uci-basic ]; then
+  echo "Found: /usr/bin/tginit-uci-basic"
+else
+  echo "Download tginit-uci-basic script..."
+  ${DBIN} /usr/bin/tginit-uci-basic https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/usr/bin/tginit-uci-basic && chmod +x /usr/bin/tginit-uci-basic
+fi
+
+if [ -f /usr/bin/tginit ]; then
+  echo "Found: /usr/bin/tginit"
+else
+  echo "Download tginit script..."
+  ${DBIN} /usr/bin/tginit https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/usr/bin/tginit && chmod +x /usr/bin/tginit;
+fi
+
+if [ -f /etc/config/torguard ]; then
+  echo "Found: /etc/config/torguard"
+else
+  echo "Initialize torguard config file"
+  tginit-uci-basic
+fi
+
 echo "### SETTINGS ###
 TorGuard interface:             ${TGIF}
 
 ### 🔐 TorGuard credentials ###
 TorGuard Username: ${TGUSER}
 TorGuard Password: ${TGPASS}
-
 
 Wireguard interface:            ${WGINTERFACE}
 🆔 Wireguard interface number:   ${WGIFNR}
@@ -45,11 +90,15 @@ Persistent Keep Alive:          ${KEEPALIVE}
 Route Allowed IPs:              ${ROUTEALLOWEDIPS}
 Endpoint host:                  ${ENDPOINT}
 Endpoint host port:             ${ENPOINTPORT}
-🛡️ Torguard wireguard server:   ${ENDPOINT}:${ENPOINTPORT}"
+🛡️ Torguard wireguard server:   ${ENDPOINT}:${ENPOINTPORT}
+
+Install openwrt dependencies:   ${DEPS}"
 
 read -p "Continue (y/n)?" answer
 case "$answer" in 
-  y|Y ) echo "starting $0...";tginit "${TGUSER}" "${TGPASS}" "${WGINTERFACE}" "${WGIFNR}" "${NOHOSTROUTE}" "${LISTENPORT}" "${MTU}" "${FWMARK}" "${KEEPALIVE}" "${DELEGATE}" "${ROUTEALLOWEDIPS}" "${FIREWALLZONE}" "${ENDPOINT}:${ENPOINTPORT}";;
+  y|Y ) echo "starting $0...";
+        opkg update && opkg install ${DEPS};
+        tginit "${TGUSER}" "${TGPASS}" "${WGINTERFACE}" "${WGIFNR}" "${NOHOSTROUTE}" "${LISTENPORT}" "${MTU}" "${FWMARK}" "${KEEPALIVE}" "${DELEGATE}" "${ROUTEALLOWEDIPS}" "${FIREWALLZONE}" "${ENDPOINT}:${ENPOINTPORT}";;
   n|N ) echo "user abort, script finished";;
   * ) echo "invalid";;
 esac
