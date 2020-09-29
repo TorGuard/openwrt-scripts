@@ -53,7 +53,7 @@ else
   read -p 'Set Password: ' TORGUARDPASS 
   read -p "Continue (y/n)?" setcred
   case "$setcred" in 
-    y|Y ) uci set torguard.@credentials_tg0[0].username="$TORGUARDUSERNAME";uci set torguard.@credentials_tg0[0].password="$TORGUARDPASS";uci commit torguard;;
+    y|Y ) uci set torguard.@credentials_${TGIF}[0].username="$TORGUARDUSERNAME";uci set torguard.@credentials_${TGIF}[0].password="$TORGUARDPASS";uci commit torguard;;
     n|N ) echo "user abort, script finished"; exit;;
     * ) echo "invalid"; exit;;
   esac
@@ -61,7 +61,7 @@ else
   case "$askserv" in 
     y|Y ) read -p "Set your server: " setserv;
           # US New York server is preset, here you can set your streaming/residential IP
-          uci set torguard.@wireguard_wg0[0].endpoint_host="$setserv";;
+          uci set torguard.@wireguard_${TGIF}[0].endpoint_host="$setserv";;
     n|N ) echo "using default script server";;
     * ) echo "invalid"; exit;;
   esac
