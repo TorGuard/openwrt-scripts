@@ -59,8 +59,7 @@ else
   esac
   read -p "Per default New York server is preset, do you want to set your rsidential/streaming/...?" askserv
   case "$askserv" in 
-    y|Y ) read -p "Set your server: " setserv;
-          # US New York server is preset, here you can set your streaming/residential IP
+    y|Y ) read -p "Set your server: " setserv
           uci set torguard.@wireguard_${TGIF}[0].endpoint_host="$setserv";;
     n|N ) echo "using default script server";;
     * ) echo "invalid"; exit;;
