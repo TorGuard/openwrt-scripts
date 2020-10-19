@@ -76,6 +76,7 @@ fi
 if [ -f /etc/config/torguard ]; then
   echo "Found: /etc/config/torguard"
 else
+  question="y"
   echo "Initialize torguard config file"
   tginit-uci-basic
   echo "Please set your torguard credentials which are require for API usage"
