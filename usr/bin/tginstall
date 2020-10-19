@@ -132,7 +132,7 @@ Endpoint host port:             ${ENPOINTPORT}
 Install openwrt dependencies:   ${DEPS}"
 
 case "$question" in
-  y|Y ) read -p "Continue (y/n)?" answer;read -p "Do you want to install iperf3 and speedperf scripts (y/n)?" setspeedperf;
+  y|Y ) read -p "Continue (y/n)?" answer;read -p "Do you want to install iperf3 and speedperf scripts (y/n)?" setspeedperf;;
   n|N ) echo "unattended: yes"; answer="y";;
   * ) echo "${INVALIDCHOICEMSG1}"; exit;;
 esac
