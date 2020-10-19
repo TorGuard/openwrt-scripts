@@ -8,6 +8,24 @@ if [ -z ${2+x} ]; then WGIFNR="0" && echo "WireGuard Interface Number was not su
 if [ -z ${3+x} ]; then question="n" && echo "Questionarrie not submited, using default: ${question}"; else question="${3}" && echo "Questionarrie submitted: ${question}"; fi
 if [ -z ${4+x} ]; then setspeedperf="n" && echo "Install speedperf not submited, using default: ${setspeedperf}"; else setspeedperf="${4}" && echo "Install speedperf submitted: ${setspeedperf}"; fi
 
+FAQMSG="### ℹ️ How to FAQ - Torguard wireguard server ###
+How to show your configs
+- Show full torguard config:      uci show torguard
+- Show only default server:       uci show torguard.@wireguard_tg0[0]
+
+How to set your configs
+- Set/edit/change server:             uci set torguard.@wireguard_tg0[0].endpoint_host='173.244.200.119'
+- Set/edit/change description:        uci set torguard.@wireguard_tg0[0].description='wg0 (TorGuard)'
+- Set/edit/change allowed ips:        uci set torguard.@wireguard_tg0[0].allowed_ips='0.0.0.0/0'
+- Set/edit/change endpoint port:      uci set torguard.@wireguard_tg0[0].endpoint_port='1443'
+- Set/edit/change keepalive:          uci set torguard.@wireguard_tg0[0].persistent_keepalive='25'
+- Set/edit/change route allowed ip's: uci set torguard.@wireguard_tg0[0].route_allowed_ips='1'
+- Remove allowed ips list entry:      uci del_list torguard.@wireguard_tg0[0].allowed_ips='0.0.0.0/0'
+- Add additional allowed ips:         uci add_list torguard.@wireguard_tg0[0].allowed_ips='0.0.0.0/0'
+
+After changing value with uci, you have to commit changes
+- Commit changes:                 uci commit torguard"
+
 INVALIDCHOICEMSG1="invalid choice, please use only y or Y for yes and n or N for no"
 
 # use curl or wget
@@ -131,24 +149,6 @@ Endpoint host port:             ${ENPOINTPORT}
 
 Install openwrt dependencies:   ${DEPS}"
 
-echo "### ℹ️ How to FAQ - Torguard wireguard server ###
-How to show your configs
-- Show full torguard config:      uci show torguard
-- Show only default server:       uci show torguard.@wireguard_tg0[0]
-
-How to set your configs
-- Set/edit/change server:             uci set torguard.@wireguard_tg0[0].endpoint_host='173.244.200.119'
-- Set/edit/change description:        uci set torguard.@wireguard_tg0[0].description='wg0 (TorGuard)'
-- Set/edit/change allowed ips:        uci set torguard.@wireguard_tg0[0].allowed_ips='0.0.0.0/0'
-- Set/edit/change endpoint port:      uci set torguard.@wireguard_tg0[0].endpoint_port='1443'
-- Set/edit/change keepalive:          uci set torguard.@wireguard_tg0[0].persistent_keepalive='25'
-- Set/edit/change route allowed ip's: uci set torguard.@wireguard_tg0[0].route_allowed_ips='1'
-- Remove allowed ips list entry:      uci del_list torguard.@wireguard_tg0[0].allowed_ips='0.0.0.0/0'
-- Add additional allowed ips:         uci add_list torguard.@wireguard_tg0[0].allowed_ips='0.0.0.0/0'
-
-After changing value with uci, you have to commit changes
-- Commit changes:                 uci commit torguard"
-
 case "$question" in
   y|Y ) read -p "Continue (y/n)?" answer;read -p "Do you want to install iperf3 and speedperf scripts (y/n)?" setspeedperf;;
   n|N ) echo "unattended: yes"; answer="y";;
@@ -169,4 +169,4 @@ case "$setspeedperf" in
   * ) echo "install speedperf: ${INVALIDCHOICEMSG1}"; exit;;
 esac
 
-echo "tginstall script finished"
+echo "tginstall script finished" && echo "${FAQMSG}"
