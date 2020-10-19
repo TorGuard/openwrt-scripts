@@ -164,7 +164,9 @@ case "$answer" in
 esac
 
 case "$setspeedperf" in 
-  y|Y ) opkg update && opkg install ${DEPSSPEEDPERF};${DBIN} /etc/config/speedperf https://github.com/TorGuard/openwrt-scripts/raw/master/etc/config/speedperf;${DBIN} /usr/bin/speedperf https://github.com/TorGuard/openwrt-scripts/raw/master/usr/bin/speedperf;chmod +x /usr/bin/speedperf;;
-  n|N ) echo "install speedperf: user abort, script finished"; exit;;
+  y|Y ) echo "install speedperf: yes";opkg update && opkg install ${DEPSSPEEDPERF};${DBIN} /etc/config/speedperf https://github.com/TorGuard/openwrt-scripts/raw/master/etc/config/speedperf;${DBIN} /usr/bin/speedperf https://github.com/TorGuard/openwrt-scripts/raw/master/usr/bin/speedperf;chmod +x /usr/bin/speedperf;;
+  n|N ) echo "install speedperf: no";;
   * ) echo "install speedperf: ${INVALIDCHOICEMSG1}"; exit;;
 esac
+
+echo "tginstall script finished"
