@@ -1,10 +1,14 @@
 #!/bin/sh
 # Copyright (c) 2020 TorGuard forum user 19807409
-# tginstall (Optional: [TorGuardConfigInterface] [WireGuardInterfaceNumber])
-# Example: tginstall tg0 0
+# tginstall (Optional: [TorGuardConfigInterface] [WireGuardInterfaceNumber] [Questionarrie] [InstallSpeedperf])
+# Example: tginstall tg0 0 n n
 # ℹ️ check submitted vars
 if [ -z ${1+x} ]; then TGIF="tg0" && echo "TorGuard Interface was not submited, using default: ${TGIF}"; else TGIF="${1}" && echo "TorGuard Interface submitted: ${TGIF}"; fi
-if [ -z ${2+x} ]; then WGIFNR="0" && echo "WireGuard Interface Number was not submited, using default: ${WGIFNR}"; else WGIFNR="${1}" && echo "TorGuard Interface submitted: ${WGIFNR}"; fi
+if [ -z ${2+x} ]; then WGIFNR="0" && echo "WireGuard Interface Number was not submited, using default: ${WGIFNR}"; else WGIFNR="${2}" && echo "WireGuard Interface Number submitted: ${WGIFNR}"; fi
+if [ -z ${3+x} ]; then question="n" && echo "Questionarrie not submited, using default: ${question}"; else question="${3}" && echo "Questionarrie submitted: ${question}"; fi
+if [ -z ${4+x} ]; then setspeedperf="n" && echo "Install speedperf not submited, using default: ${setspeedperf}"; else setspeedperf="${4}" && echo "Install speedperf submitted: ${setspeedperf}"; fi
+
+INVALIDCHOICEMSG1="invalid choice, please use only y or Y for yes and n or N for no"
 
 # use curl or wget
 if [ -f /usr/bin/curl ]; then
@@ -14,17 +18,26 @@ elif [ -f /usr/bin/wget ]; then
   echo "wget: OK - found: /usr/bin/wget, download init script"
   DBIN="/usr/bin/wget -O"
 else
-  DBIN="ERROR: script requires curl or wget with ssl support" &&  echo "$DBIN
-  Install curl with:
+  echo "curl: not found"
+  echo "wget: not found"
+  echo "try to install curl from opkg..."
+  opkg update && opkg install curl
 
-    opkg update
-    opkg install curl
+  if [ -f /usr/bin/curl ]; then
+    echo "curl: OK - found: /usr/bin/curl"
+  else
+    DBIN="ERROR: script requires curl or wget with ssl support, installation failed" &&  echo "$DBIN
+    Install curl with:
 
-  or wget-ssl with:
+      opkg update
+      opkg install curl
 
-    opkg update
-    opkg install wget-ssl"
-  exit
+    or wget-ssl with:
+
+      opkg update
+      opkg install wget-ssl"
+    exit
+  fi
 fi
 
 # ℹ️ Initialize luci configs and install wireguard interface
@@ -55,19 +68,20 @@ else
   case "$setcred" in 
     y|Y ) uci set torguard.@credentials_${TGIF}[0].username="$TORGUARDUSERNAME";uci set torguard.@credentials_${TGIF}[0].password="$TORGUARDPASS";uci commit torguard;;
     n|N ) echo "user abort, script finished"; exit;;
-    * ) echo "invalid"; exit;;
+    * ) echo "${INVALIDCHOICEMSG1}"; exit;;
   esac
-  read -p "Per default New York server is preset, do you want to set your residential/streaming/...?" askserv
+  read -p "Do you want to set custom IP (y/n)? (default New York server will be used if custom IP is not set)" askserv
   case "$askserv" in 
     y|Y ) read -p "Set your server: " setserv
           uci set torguard.@wireguard_${TGIF}[0].endpoint_host="$setserv";;
     n|N ) echo "using default script server";;
-    * ) echo "invalid"; exit;;
+    * ) echo "${INVALIDCHOICEMSG1}"; exit;;
   esac
 fi
 
 # OPKG Dependencies
 DEPS="kmod-wireguard wireguard-tools"
+DEPSOPTIONAL="ipset"
 DEPSSPEEDPERF="iperf3"
 
 # 🔐 TorGuard credentials
@@ -90,12 +104,15 @@ ENDPOINT=$(uci get torguard.@wireguard_${TGIF}[0].endpoint_host):$(uci get torgu
 ENPOINTPORT=$(uci get torguard.@wireguard_${TGIF}[0].endpoint_port)
 
 echo "### SETTINGS ###
-TorGuard interface:             ${TGIF}
+Unattended install:             ${question}
+Install speedperf:              ${speedperf}
 
 ### 🔐 TorGuard credentials ###
 TorGuard Username: ${TGUSER}
 TorGuard Password: ${TGPASS}
 
+### 🔐 TorGuard interface ###
+TorGuard interface:             ${TGIF}
 Wireguard interface:            ${WGINTERFACE}
 🆔 Wireguard interface number:   ${WGIFNR}
 Assign to firewall zone:        ${FIREWALLZONE} (0 - lan, 1 - wan)
@@ -114,18 +131,22 @@ Endpoint host port:             ${ENPOINTPORT}
 
 Install openwrt dependencies:   ${DEPS}"
 
-read -p "Continue (y/n)?" answer
-case "$answer" in 
-  y|Y ) echo "starting $0...";
-        opkg update && opkg install ${DEPS};
-        tginit "${TGUSER}" "${TGPASS}" "${WGINTERFACE}" "${WGIFNR}" "${NOHOSTROUTE}" "${LISTENPORT}" "${MTU}" "${FWMARK}" "${KEEPALIVE}" "${DELEGATE}" "${ROUTEALLOWEDIPS}" "${FIREWALLZONE}" "${ENDPOINT}:${ENPOINTPORT}";;
-  n|N ) echo "user abort, script finished"; exit;;
-  * ) echo "invalid"; exit;;
+case "$question" in
+  y|Y ) read -p "Continue (y/n)?" answer;read -p "Do you want to install iperf3 and speedperf scripts (y/n)?" setspeedperf;
+  n|N ) echo "unattended: yes"; answer="y";;
+  * ) echo "${INVALIDCHOICEMSG1}"; exit;;
 esac
 
-read -p "Do you want to install iperf3 and speedperf scripts (y/n)?" setspeedperf
+case "$answer" in 
+  y|Y ) echo "starting $0...";
+        opkg update && opkg install ${DEPS} ${DEPSOPTIONAL};
+        tginit "${TGUSER}" "${TGPASS}" "${WGINTERFACE}" "${WGIFNR}" "${NOHOSTROUTE}" "${LISTENPORT}" "${MTU}" "${FWMARK}" "${KEEPALIVE}" "${DELEGATE}" "${ROUTEALLOWEDIPS}" "${FIREWALLZONE}" "${ENDPOINT}:${ENPOINTPORT}";;
+  n|N ) echo "user abort, script finished"; exit;;
+  * ) echo "${INVALIDCHOICEMSG1}"; exit;;
+esac
+
 case "$setspeedperf" in 
   y|Y ) opkg update && opkg install ${DEPSSPEEDPERF};${DBIN} /etc/config/speedperf https://github.com/TorGuard/openwrt-scripts/raw/master/etc/config/speedperf;${DBIN} /usr/bin/speedperf https://github.com/TorGuard/openwrt-scripts/raw/master/usr/bin/speedperf;chmod +x /usr/bin/speedperf;;
-  n|N ) echo "user abort, script finished"; exit;;
-  * ) echo "invalid"; exit;;
+  n|N ) echo "install speedperf: user abort, script finished"; exit;;
+  * ) echo "install speedperf: ${INVALIDCHOICEMSG1}"; exit;;
 esac
