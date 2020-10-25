@@ -1,12 +1,19 @@
 #!/bin/sh
 # Copyright (c) 2020 TorGuard forum user 19807409
-# tginstall (Optional: [TorGuardConfigInterface] [WireGuardInterfaceNumber] [Questionarrie] [InstallSpeedperf])
-# Example: tginstall tg0 0 n n
+# tginstall (Optional: [TorGuardConfigInterface] [WireGuardInterfaceNumber] [Questionarrie] [InstallSpeedperf] [HidePassword])
+# Example: tginstall tg0 0 n n n
 # ℹ️ check submitted vars
-if [ -z ${1+x} ]; then TGIF="tg0" && echo "TorGuard Interface was not submited, using default: ${TGIF}"; else TGIF="${1}" && echo "TorGuard Interface submitted: ${TGIF}"; fi
-if [ -z ${2+x} ]; then WGIFNR="0" && echo "WireGuard Interface Number was not submited, using default: ${WGIFNR}"; else WGIFNR="${2}" && echo "WireGuard Interface Number submitted: ${WGIFNR}"; fi
-if [ -z ${3+x} ]; then question="n" && echo "Questionarrie not submited, using default: ${question}"; else question="${3}" && echo "Questionarrie submitted: ${question}"; fi
-if [ -z ${4+x} ]; then setspeedperf="n" && echo "Install speedperf not submited, using default: ${setspeedperf}"; else setspeedperf="${4}" && echo "Install speedperf submitted: ${setspeedperf}"; fi
+#if [ -z ${1+x} ]; then TGIF="tg0" && echo "TorGuard Interface was not submited, using default: ${TGIF}"; else TGIF="${1}" && echo "TorGuard Interface submitted: ${TGIF}"; fi
+#if [ -z ${2+x} ]; then WGIFNR="0" && echo "WireGuard Interface Number was not submited, using default: ${WGIFNR}"; else WGIFNR="${2}" && echo "WireGuard Interface Number submitted: ${WGIFNR}"; fi
+#if [ -z ${3+x} ]; then question="n" && echo "Questionarrie not submited, using default: ${question}"; else question="${3}" && echo "Questionarrie submitted: ${question}"; fi
+#if [ -z ${4+x} ]; then setspeedperf="n" && echo "Install speedperf not submited, using default: ${setspeedperf}"; else setspeedperf="${4}" && echo "Install speedperf submitted: ${setspeedperf}"; fi
+
+# Default settings
+if [ -n "${1}" ]; then TGIF="${1}"; else TGIF="tg0"; fi
+if [ -n "${2}" ]; then WGIFNR="${2}"; else WGIFNR="0";fi
+if [ -n "${3}" ]; then question="${3}"; else question="n";fi
+if [ -n "${4}" ]; then setspeedperf="${4}";else setspeedperf="n";fi
+if [ -n "${5}" ]; then HidePassword="${5}";else HidePassword="n";fi
 
 FAQMSG="### ℹ️ How to FAQ - Torguard wireguard server ###
 How to show your configs
@@ -26,15 +33,30 @@ How to set your configs
 After changing value with uci, you have to commit changes
 - Commit changes:                 uci commit torguard"
 
+TORGUARDAPIPRIVKEYINFO="PRIVATE KEY INFO:Please use TorGuard wireguard tool or connect with with TorGuard client on any other machine, then get your private key with:
+
+  wg showconf torguard-wg | grep PrivateKey
+
+Example: iFOcWqNA3sYlUwbwHmil1oV4MsvbczA0YchzjDBjO38="
+
 INVALIDCHOICEMSG1="invalid choice, please use only y or Y for yes and n or N for no"
+
+# OPKG Dependencies
+DEPS="kmod-wireguard wireguard-tools"
+DEPSOPTIONAL="ipset curl"
+DEPSSPEEDPERF="iperf3"
+DEPSFIRSTINSTALL="$DEPS $DEPSOPTIONAL"
+DEPSASKINSTALL=""
 
 # use curl or wget
 if [ -f /usr/bin/curl ]; then
   echo "curl: OK - found: /usr/bin/curl"
   DBIN="/usr/bin/curl -o"
+  DBINAPI="/usr/bin/curl -k"
 elif [ -f /usr/bin/wget ]; then
   echo "wget: OK - found: /usr/bin/wget, download init script"
   DBIN="/usr/bin/wget -O"
+  DBINAPI="/usr/bin/wget --no-check-certificate -qO-"
 else
   echo "curl: not found"
   echo "wget: not found"
@@ -74,34 +96,47 @@ else
 fi
 
 if [ -f /etc/config/torguard ]; then
-  echo "Found: /etc/config/torguard"
+  echo "Found: /etc/config/torguard (unattended setup)"
+  question="n"
+  setspeedperf="n"
 else
   question="y"
   echo "Initialize torguard config file"
   tginit-uci-basic
-  echo "Please set your torguard credentials which are require for API usage"
+  echo "Please set your torguard credentials which are require for API usage..."
   read -p 'Set Username: ' TORGUARDUSERNAME
-  #read -sp 'Set Password: ' TORGUARDPASS
-  read -p 'Set Password: ' TORGUARDPASS 
-  read -p "Continue (y/n)?" setcred
+  case "$HidePassword" in 
+    y|Y ) read -sp 'Set Password: ' TORGUARDPASS;;
+    n|N ) read -p 'Set Password: ' TORGUARDPASS;;
+    * ) echo "Warning: invalid HidePassword value was set/passed, using default value to show password"; read -p 'Set Password: ' TORGUARDPASS;;
+  esac
+  echo "Please confirm if your password and username are correct:";echo "Entered Username: ${TORGUARDUSERNAME}";echo "Entered Password: ${TORGUARDPASS}"
+  read -p "Are entered username/password correct and do you want to continue (y/n)? " setcred
   case "$setcred" in 
     y|Y ) uci set torguard.@credentials_${TGIF}[0].username="$TORGUARDUSERNAME";uci set torguard.@credentials_${TGIF}[0].password="$TORGUARDPASS";uci commit torguard;;
-    n|N ) echo "user abort, script finished"; exit;;
+    n|N ) echo "user abort because entered password/username combinatino is incorrect, script finished and exiting ..."; exit;;
     * ) echo "${INVALIDCHOICEMSG1}"; exit;;
   esac
-  read -p "Do you want to set custom IP (y/n)? (default New York server will be used if custom IP is not set)" askserv
+  echo "ℹ️ - By not setting your your custom IP, New York's server will be used as default"
+  read -p "Do you want to set custom IP (y/n)? " askserv
   case "$askserv" in 
-    y|Y ) read -p "Set your server: " setserv
-          uci set torguard.@wireguard_${TGIF}[0].endpoint_host="$setserv";;
+    y|Y ) read -p "Set your server ip address: " setserv;echo "${TORGUARDAPIPRIVKEYINFO}";read -p 'Set your wireguard private key: ' TORGUARDAPIPRIVKEY;uci set torguard.@wireguard_${TGIF}[0].endpoint_host="$setserv";uci set torguard.@wireguard_${TGIF}[0].wgapipubkey=$(echo "${TORGUARDAPIPRIVKEY}" | wg pubkey | sed 's/=/%3D/');;
     n|N ) echo "using default script server";;
     * ) echo "${INVALIDCHOICEMSG1}"; exit;;
   esac
+  read -p "Do you want upgrade dependencies on every run (y/n)? " askupgrade;
+  case "$askupgrade" in 
+    y|Y ) uci set torguard.@wireguard_${TGIF}[0].upgrade="1";;
+    n|N ) echo "disabling upgrade on every run...";uci set torguard.@wireguard_${TGIF}[0].upgrade="0";;
+    * ) echo "${INVALIDCHOICEMSG1}"; exit;;
+  esac
+  read -p "Do you want to install/reinstall required dependencies (y/n)? " askinstalldependencies
+  case "$askinstalldependencies" in 
+    y|Y ) opkg update && opkg install ${DEPSFIRSTINSTALL};;
+    n|N ) echo "WARNING: skipping installation of required packages, script will continue but will end in errors";;
+    * ) echo "${INVALIDCHOICEMSG1}"; exit;;
+  esac
 fi
-
-# OPKG Dependencies
-DEPS="kmod-wireguard wireguard-tools"
-DEPSOPTIONAL="ipset"
-DEPSSPEEDPERF="iperf3"
 
 # 🔐 TorGuard credentials
 TGUSER=$(uci get torguard.@credentials_${TGIF}[0].username)
@@ -115,10 +150,14 @@ NOHOSTROUTE=$(uci torguard.@interface_${TGIF}[0].nohostroute)
 LISTENPORT=$(uci get torguard.@interface_${TGIF}[0].listen_port)
 MTU=$(uci get torguard.@interface_${TGIF}[0].mtu)
 FWMARK=$(uci get torguard.@interface_${TGIF}[0].fwmark)
-KEEPALIVE=$(uci get torguard.@interface_${TGIF}[0].persistent_keepalive)
 DELEGATE=$(uci get torguard.@interface_${TGIF}[0].delegate)
 ROUTEALLOWEDIPS=$(uci get torguard.@wireguard_${TGIF}[0].route_allowed_ips)
-ENDPOINT=$(uci get torguard.@wireguard_${TGIF}[0].endpoint_host):$(uci get torguard.@wireguard_${TGIF}[0].endpoint_port)
+KEEPALIVE=$(uci get torguard.@wireguard_${TGIF}[0].persistent_keepalive)
+ENDPOINT=$(uci get torguard.@wireguard_${TGIF}[0].endpoint_host)
+WGPRIVKEY=$(uci get torguard.@wireguard_${TGIF}[0].tgprivkey)
+WGAPIPUBKEY=$(uci get torguard.@wireguard_${TGIF}[0].wgapipubkey)
+WGUPGRADE=$(uci get torguard.@wireguard_${TGIF}[0].upgrade)
+
 # 🛡️ Torguard server [host]:[port]
 ENPOINTPORT=$(uci get torguard.@wireguard_${TGIF}[0].endpoint_port)
 
@@ -147,8 +186,12 @@ Route Allowed IPs:              ${ROUTEALLOWEDIPS}
 🛡️ Torguard wireguard server: 
 Endpoint host:                  ${ENDPOINT}
 Endpoint host port:             ${ENPOINTPORT}
+Wireguard priv key:             ${WGPRIVKEY}
+Wireguard api pub key:          ${WGAPIPUBKEY}
 
-Install openwrt dependencies:   ${DEPS}"
+# Openwrt update/upgrade options
+Openwrt dependencies:           ${DEPS}
+Upgrade dependencies:           ${WGUPGRADE}"
 
 case "$question" in
   y|Y ) read -p "Continue (y/n)?" answer;read -p "Do you want to install iperf3 and speedperf scripts (y/n)?" setspeedperf;;
@@ -158,8 +201,8 @@ esac
 
 case "$answer" in 
   y|Y ) echo "starting $0...";
-        opkg update && opkg install ${DEPS} ${DEPSOPTIONAL};
-        tginit "${TGUSER}" "${TGPASS}" "${WGINTERFACE}" "${WGIFNR}" "${NOHOSTROUTE}" "${LISTENPORT}" "${MTU}" "${FWMARK}" "${KEEPALIVE}" "${DELEGATE}" "${ROUTEALLOWEDIPS}" "${FIREWALLZONE}" "${ENDPOINT}:${ENPOINTPORT}";;
+        #opkg update && opkg install ${DEPS} ${DEPSOPTIONAL};
+        tginit "${TGUSER}" "${TGPASS}" "${WGINTERFACE}" "${WGIFNR}" "${NOHOSTROUTE}" "${LISTENPORT}" "${MTU}" "${FWMARK}" "${KEEPALIVE}" "${DELEGATE}" "${ROUTEALLOWEDIPS}" "${FIREWALLZONE}" "${WGPRIVKEY}" "${ENDPOINT}:${ENPOINTPORT}";;
   n|N ) echo "user abort, script finished"; exit;;
   * ) echo "${INVALIDCHOICEMSG1}"; exit;;
 esac

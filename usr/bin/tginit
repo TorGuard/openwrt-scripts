@@ -19,60 +19,64 @@
 #	sed -i "s/YourVPNPassword/${TGPASS}/" /usr/bin/tginstall
 #	sed -i "s/TorguardServer1:1443 TorguardServer2:1443 TorguardServer3:1443/${TGSERVERLIST}/" /usr/bin/tginstall
 #
+getmyipTorGuard () {
+	#$1 - VPN Username $2 - VPN Password $3 - Wireguard Endpoint $4 - Wireguard Port $5 - My wireguard public key
+	URL="https://updates.torguard.biz/cgi-bin/whatismyip.pl"
+	MYIPADDRESS=$(${DBINAPI} ${URL})
+}
+
 # Wireguarrd key generation
 genwgkey () {
 	PRIVATE=$(wg genkey)
 	PUBLIC=$(echo "${PRIVATE}" | wg pubkey)
+	APIPUBKEY=$(echo "${PUBLIC}" | sed 's/=/%3D/')
 }
 
-# Get TorGuard server connection info with wget
-wgetinfo () {
+createwgpubkeys () {
+	PUBLIC=$(echo "${PRIVATE}" | wg pubkey)
+	APIPUBKEY=$(echo "${PUBLIC}" | sed 's/=/%3D/')
+}
+
+createapidemoscript () {
 	#$1 - VPN Username
 	#$2 - VPN Password
 	#$3 - Wireguard Endpoint
 	#$4 - Wireguard Port
 	#$5 - My wireguard public key
+	#$6 - Output filename
 	#wget -O $6 --no-check-certificate https://$1:$2@$3:$4/api/v1/setup?public-key=$5
 	URL="https://${1}:${2}@${3}:${4}/api/v1/setup?public-key=${5}"
-	echo "API: ${URL}"
-	TGINFO=$(wget --no-check-certificate -qO- ${URL})
+	cat <<EOF_cronjobscript | tee $6
+#!/bin/sh
+${DBINAPI} ${URL}
+EOF_cronjobscript
+	echo "Make cronjob script executable: $6"
+	chmod +x $6
 }
 
 # Get TorGuard server connection info with curl
-curlinfo () {
+downloadinfo () {
 	#$1 - VPN Username $2 - VPN Password $3 - Wireguard Endpoint $4 - Wireguard Port $5 - My wireguard public key
 	URL="https://${1}:${2}@${3}:${4}/api/v1/setup?public-key=${5}"
 	echo "API: https://$1:$2@$3:$4/api/v1/setup?public-key=${5}"
-	TGINFO=$(curl -k ${URL})
+	TGINFO=$($DBINAPI ${URL})
 }
 
 # get connection information from torguard server and set variables
 gettginfo () {
-	if [ -f /usr/bin/curl ]; then
-		echo "curl: OK - found: /usr/bin/curl"
-		curlinfo "${1}" "${2}" "${3}" "${4}" "${5}"
-	elif [ -f /usr/bin/wget ]; then
-		echo "wget: OK - found: /usr/bin/wget"
-		wgetinfo "${1}" "${2}" "${3}" "${4}" "${5}"
-	else
-		echo "ERROR: script requires curl or wget with ssl support
-		Install curl with:
+	downloadinfo "${1}" "${2}" "${3}" "${4}" "${5}"
+	createapidemoscript "${1}" "${2}" "${3}" "${4}" "${5}" "${TGAPITEST}"
+}
 
-			opkg update
-			opkg install curl
-
-		or wget-ssl with:
-
-			opkg update
-			opkg install wget-ssl"
-		exit
-	fi
+# Delete wireguard interface
+deletewginterface () {
+	echo "delete existing default peer 0 and commit changes..." && uci delete network.@wireguard_${1}[0] && uci commit network
+	echo "delete existing wireguard interface and commit changes..." && uci delete network.${1} && uci commit network
+	echo "restart network..." && /etc/init.d/network restart
 }
 
 # Add wireguard interface
 addwginterface () {
-	echo "delete existing default peer 0 and commit changes..." && uci delete network.@wireguard_${1}[0] && uci commit network
-	echo "delete existing wireguard interface and commit changes..." && uci delete network.${1} && uci commit network
 	echo "add new network interface (torguard wireguard interface)" && uci add network interface
 	echo "rename new interface to: ${1}" && uci rename network.@interface[-1]=${1}
 	echo "set new interface's proto: wireguard" && uci set network.@interface[-1].proto='wireguard'
@@ -97,8 +101,37 @@ addwginterface () {
 	uci commit firewall
 }
 
+# use curl or wget
+if [ -f /usr/bin/curl ]; then
+  echo "curl: OK - found: /usr/bin/curl"
+  DBIN="/usr/bin/curl -o"
+  DBINAPI="/usr/bin/curl -k"
+elif [ -f /usr/bin/wget ]; then
+  echo "wget: OK - found: /usr/bin/wget, download init script"
+  DBIN="/usr/bin/wget --no-check-certificate -O"
+  DBINAPI="/usr/bin/wget --no-check-certificate -qO-"
+else
+  echo "curl: not found"
+  echo "wget: not found"
+  echo "try to install curl from opkg..."
+  opkg update && opkg install curl
+fi
+
+# initialize vars (**TODO** delete them after cleanup)
+PRIVATE=""
+PUBLIC=""
+APIPUBKEY=""
+ENDPOINT=""
+ENDPOINTPORT=""
+TGINFO=""
+DESCRIPTION=""
+MYIPADDRESS=""
+
+# create torguard api server test script with current settings
+TGAPITEST="/usr/bin/tgapitest"
+
 # Each server in a string must be provided by server and port "server:port" and separated by space "srv1:1234 srv2:5678"
-TGSERVERLIST="${13}" # TorGuard Server List separated by space, "srv1:1234 srv2:5678"
+TGSERVERLIST="${14}" # TorGuard Server List separated by space, "srv1:1234 srv2:5678"
 # TorGuard credentials
 VPNUSERNAME="${1}"		# TorGuard VPN username
 VPNPASS="${2}"			# TorGuard VPN password
@@ -110,11 +143,20 @@ MTU="${7}"			# Optional. Maximum Transmission Unit of tunnel interface.
 # Optional. 32-bit mark for outgoing encrypted packets. Enter value in hex, starting with 0x. Default: 0xFE
 if [ -z ${8+x} ]; then echo "FWMARK was not submited, using dummy value 0xFE" FWMARK="0xFE"; else FWMARK="${8}"; fi
 KEEPALIVE="${9}"		# Optional. Seconds between keep alive messages. Default is 0 (disabled). Recommended value if this device is behind a NAT is 25.
-USEBUILTINIPV6="${10}"		# Use builtin IPv6-management	0 to disable, 1 to enable
+USEBUILTINIPV6="${10}"	# Use builtin IPv6-management	0 to disable, 1 to enable
 ROUTEALLOWEDIPS="${11}"	# Route allowed IPs, 0 to disable, 1 to enable
-FIREWALLZONE="${12}"		# Assign firewall-zone, 1 is wan, 0 is lan, default: 1
+FIREWALLZONE="${12}"	# Assign firewall-zone, 1 is wan, 0 is lan, default: 1
+TGPRIVKEY="${13}"		# this is your peers wireguard private key, if not passed/empty, new keypairs will be generated
 
-echo "
+if [ -n "$TGPRIVKEY" ]; then
+    echo "API key from /etc/config/torguard OK - ${TGPRIVKEY}"
+	PRIVATE="${TGPRIVKEY}"
+	createwgpubkeys
+else
+	echo "create new private and public keys..." && genwgkey
+fi
+
+echo "Passed vars:
 TorGuard VPN username:					${1}
 TorGuard VPN password:					${2}
 Wireguard interface name:				${3}
@@ -126,15 +168,9 @@ Maximum Transmission Unit of tunnel:	${7}
 Seconds between keep alive messages:	${9}
 Use builtin IPv6-management:			${10}
 Route allowed IPs:						${11}
-TorGuard Server List:					${12}"
-
-# initialize vars (**TODO** delete them after cleanup)
-PRIVATE=""
-PUBLIC=""
-ENDPOINT=""
-ENDPOINTPORT=""
-TGINFO=""
-DESCRIPTION=""
+TorGuard firewall zone:					${12}
+TorGuard wireguard private key:			${13}
+TorGuard Server List:					${14}"
 
 TMPPORT=$(( $LISTENPORT - 1 ))
 TMPFWMARK=$(printf "%x\n" $(( $(printf "%d\n" ${FWMARK}) - 1 )))
@@ -146,11 +182,23 @@ for i in ${TGSERVERLIST}; do
 	TMPFWMARK=$(printf "%x\n" $(( $(printf "%d\n" 0x${TMPFWMARK}) + 1 ))) && echo "FWMARK: $TMPFWMARK"
 	TMPWGIFNR=$(( $TMPWGIFNR + 1 )) && echo "Wireguard interface number: $TMPWGIFNR"
 	DESCRIPTION="${WGINTERFACE}${WGIFNR} (TorGuard)" && echo "Description: $DESCRIPTION"
-	ZONEINTERFACES=$(uci get firewall.@zone[${FIREWALLZONE}].network) && echo "Firewall zone: $ZONEINTERFACES"
+	ZONEINTERFACES=$(uci get firewall.@zone[${FIREWALLZONE}].network | sed "s/${WGINTERFACE}${WGIFNR}//g") && echo "Firewall zone: $ZONEINTERFACES"
 	ENDPOINT=$(echo $i | awk -F'[:]' '{print $1}') && echo "Endpoint host: $ENDPOINT"
 	ENDPOINTPORT=$(echo $i | awk -F'[:]' '{print $2}') && echo "Endpoint port: $ENDPOINTPORT"
-	echo "create new private and public keys" && genwgkey && echo "YOUR NEW PRIVATE AND PUBLIC KEYS:" && echo "Private: ${PRIVATE}" && echo "Public:  ${PUBLIC}"
-	gettginfo "${VPNUSERNAME}" "${VPNPASS}" "${ENDPOINT}" "${ENDPOINTPORT}" "${PUBLIC}"
+	echo "delete wireguard interface with same name... ($i)"
+	# delete current interface for a case that IP is not
+	deletewginterface "${WGINTERFACE}${WGIFNR}"
+	getmyipTorGuard && echo "my current IP address after deletion of ${WGINTERFACE}${WGIFNR}: ${MYIPADDRESS}"
+	# from here internet connection must be present
+	if [ -n "$TGPRIVKEY" ]; then
+		echo "using API key from /etc/config/torguard: OK (${TGPRIVKEY})"
+		PRIVATE="${TGPRIVKEY}"
+		createwgpubkeys
+	else
+		echo "create new private and public keys..." && genwgkey
+	fi
+	echo "USED PUBLIC AND API KEYS:" && echo "Private: ${PRIVATE}" && echo "Public:  ${PUBLIC}" && echo "API Public key:${APIPUBKEY}"
+	gettginfo "${VPNUSERNAME}" "${VPNPASS}" "${ENDPOINT}" "${ENDPOINTPORT}" "${APIPUBKEY}"
 	WGPUBLIC=$(echo ${TGINFO} | awk -F'[,]' '{print $1}' | awk -F'[:]' '{print $2}' | sed 's/"//g') && echo "Public key: ${WGPUBLIC}"
 	SERVERIP=$(echo ${TGINFO} | awk -F'[,]' '{print $2}' | awk -F'[:]' '{print $2}' | sed 's/"//g') && echo "Peer server: ${SERVERIP}"
 	CLIENTIP=$(echo ${TGINFO} | awk -F'[,]' '{print $3}' | awk -F'[:]' '{print $2}' | sed 's/"//g') && echo "IP Addresses: ${CLIENTIP}"
@@ -165,5 +213,6 @@ done
 
 /etc/init.d/firewall restart
 /etc/init.d/network restart
+getmyipTorGuard && echo "my current IP address after creation of ${WGINTERFACE}${WGIFNR}: ${MYIPADDRESS}"
 
 echo "Torguard wireguard initialization finished, please reboot to complete"
