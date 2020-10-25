@@ -35,6 +35,9 @@ uci set torguard.@wireguard_tg0[-1].endpoint_host='173.244.200.119'
 uci set torguard.@wireguard_tg0[-1].endpoint_port='1443'
 uci set torguard.@wireguard_tg0[-1].persistent_keepalive='25'
 uci set torguard.@wireguard_tg0[-1].route_allowed_ips='1'
+uci set torguard.@wireguard_tg0[-1].tgprivkey=''
+uci set torguard.@wireguard_tg0[-1].wgapipubkey=''
+uci set torguard.@wireguard_tg0[-1].upgrade='0'
 
 uci add torguard specification
 uci add_list torguard.@specification[-1].proto='udp'
