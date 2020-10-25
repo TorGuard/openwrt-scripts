@@ -213,6 +213,5 @@ done
 
 /etc/init.d/firewall restart
 /etc/init.d/network restart
-getmyipTorGuard && echo "my current IP address after creation of ${WGINTERFACE}${WGIFNR}: ${MYIPADDRESS}"
-
 echo "Torguard wireguard initialization finished, please reboot to complete"
+echo "wait 10 seconds before checking for current IP" && sleep 10 && getmyipTorGuard && echo "MY IP ADDRESS: ${WGINTERFACE}${WGIFNR}: ${MYIPADDRESS}"
