@@ -1,6 +1,7 @@
 # openwrt-scripts
 
 TorGuard related OpenWRT scripts
+
 - [openwrt-scripts](#openwrt-scripts)
   - [TorGuard Wireguard Installation](#torguard-wireguard-installation)
     - [download and install with wget](#download-and-install-with-wget)
@@ -10,6 +11,7 @@ TorGuard related OpenWRT scripts
     - [tginit](#tginit)
     - [torguard's wireguard api v1](#torguards-wireguard-api-v1)
       - [API Expiration](#api-expiration)
+      - [Validation loop script](#validation-loop-script)
       - [tgapi service](#tgapi-service)
       - [Example for New York shared server](#example-for-new-york-shared-server)
   - [speedperf](#speedperf)
@@ -37,6 +39,8 @@ chmod +x /usr/bin/tginstall && tginstall
 
 ### tginstall
 
+- default path: `/usr/bin/tginstall`
+
 helper script for tginit. You can pass only 2 variables:
 
 - (1) openwrt interface name, default is wg and will be used if no vars are passed
@@ -45,6 +49,8 @@ helper script for tginit. You can pass only 2 variables:
 all other values are retrieved from [/etc/config/torguard](etc/config/torguard).
 
 ### tginit
+
+- default path: `/usr/bin/tginit`
 
 Torguard initialization script. Script generates new keypair and retrieves wireguard interface options from TorGuard server to which a user connects to with your torguard credentials, then it creates wireguard interface. After script finishes, please recheck your new interface if all values are there and if everything is ok, reboot your device.
 
@@ -64,12 +70,11 @@ Currently only whitelisted/whitelabeled keys work and to get one can be performe
 
 You can use the API manually, retrieve required values with a browser.
 
-Public key for API usage has to be converted first into appropriate format by replacing suffix `=` with `%3D` 
+Public key for API usage has to be converted first into appropriate format by replacing suffix `=` with `%3D`
 
 - Usage:
 
     `https://[USER]:[PASS]@[SERVER]:[PORT]/api/v1/setup?public-key=[YOURPUBLICKEY]`
-
 
 #### API Expiration
 
@@ -79,7 +84,18 @@ Currently every connection will work for 15 minutes, no disconnect will happen, 
 - To extend, currently used method by this script is to run simply API call which does extend in Torguard's system the use
 - **If your device already has no internet, running api call would immediately let it work without reconnect or network restart**
 
+#### Validation loop script
+
+- default path:  `/usr/bin/tgapitest`
+
+This script extends/validates connection to keep your wg active. Current restriction set by TorGuard is 15 minutes, please check always directly on torguard homepage/forum for any changes on this.
+Script can run on every linux system.
+If it uses wget or curl depends only on tginstall/tginit process finding/using either curl or wget.
+
 #### tgapi service
+
+- default path: `/etc/init.d/tgapi`
+
 
 I wrote a demo scratch service file which can be used instead of cronjob, it is very simple, please extend it according to your needs
 
@@ -88,6 +104,19 @@ I wrote a demo scratch service file which can be used instead of cronjob, it is 
   ```shell
   /etc/init.d/tgapi enable
   /etc/init.d/tgapi start
+  ```
+
+- how to check if script is running
+
+  ```shell
+  ps w | grep tgapitest
+  ```
+
+  results show you if script is /usr/bin/tgapitest is running, in example below with pid 3283
+  
+  ```log
+  3283 root      1256 S    /bin/sh /usr/bin/tgapitest
+  3535 root      1248 S    grep tgapitest
   ```
 
 #### Example for New York shared server
