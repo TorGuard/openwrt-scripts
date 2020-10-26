@@ -87,7 +87,7 @@ I wrote a demo scratch service file which can be used instead of cronjob, it is 
 
   ```shell
   /etc/init.d/tgapi enable
-  /etc/init.d/start
+  /etc/init.d/tgapi start
   ```
 
 #### Example for New York shared server
