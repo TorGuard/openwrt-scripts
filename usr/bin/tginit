@@ -79,7 +79,7 @@ start_service() {
 	procd_close_instance
 }
 EOF_tgapiservicescript
-	echo "Make init script executable: $/etc/init.d/tgapi"
+	echo "Make init script executable: /etc/init.d/tgapi"
 	chmod +x /etc/init.d/tgapi
 }
 
