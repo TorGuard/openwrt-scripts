@@ -48,6 +48,7 @@ createapidemoscript () {
 	#$8 - Wait time
 	#wget -O $6 --no-check-certificate https://$1:$2@$3:$4/api/v1/setup?public-key=$5
 	URL="https://${1}:${2}@${3}:${4}/api/v1/setup?public-key=${5}"
+	if [ -f ${6} ]; then mv -f ${6} ${6}.bkp; fi
 	cat <<EOF_cronjobscript | tee $6
 #!/bin/sh
 # Copyright (c) 2020 TorGuard forum user 19807409
