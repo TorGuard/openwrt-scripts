@@ -65,7 +65,7 @@ EOF_cronjobscript
 	echo "Make cronjob script executable: $6"
 	chmod +x $6
 
-	if [ -f /etc/init.d/tgapi ]; then mv -f /etc/init.d/tgapi /etc/init.d/tgapi.bkp; fi
+	if [ -f ${7} ]; then mv -f ${7} ${7}.bkp; fi
 	
 	cat <<EOF_tgapiservicescript | tee ${7}
 #!/bin/sh
