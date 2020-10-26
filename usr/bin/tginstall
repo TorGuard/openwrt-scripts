@@ -213,4 +213,11 @@ case "$setspeedperf" in
   * ) echo "install speedperf: ${INVALIDCHOICEMSG1}"; exit;;
 esac
 
+timeoutfix=$(uci get torguard.@wireguard_tg0[0].timeoutfix)
+case "$timeoutfix" in
+  1|y|Y ) echo "timeoutfix: enabled";echo "Enable timeoutfix service: yes";/etc/init.d/tgapi enable;/etc/init.d/tgapi start;TFIXSTATUS=$(/etc/init.d/tgapi status);echo "tgapi status: ${TFIXSTATUS}";;
+  0|n|N ) echo "timeoutfix: disabled";;
+  * ) echo "timoutfix: ${INVALIDCHOICEMSG1}";;
+esac
+
 echo "tginstall script finished" && echo "${FAQMSG}"
