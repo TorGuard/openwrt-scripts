@@ -43,19 +43,23 @@ createapidemoscript () {
 	#$3 - Wireguard Endpoint
 	#$4 - Wireguard Port
 	#$5 - My wireguard public key
-	#$6 - Output filename
-	#$7 - Wait time
+	#$6 - Output filepath
+	#$7 - Service filepath
+	#$8 - Wait time
 	#wget -O $6 --no-check-certificate https://$1:$2@$3:$4/api/v1/setup?public-key=$5
 	URL="https://${1}:${2}@${3}:${4}/api/v1/setup?public-key=${5}"
 	cat <<EOF_cronjobscript | tee $6
 #!/bin/sh
 # Copyright (c) 2020 TorGuard forum user 19807409
 # endless loop running every 5 minutes (300 seconds)
-WAITTIME=${7}
+WAITTIME=${8}
 while true
 do
 	${DBINAPI} ${URL}
-	sleep $WAITTIME
+EOF_cronjobscript
+
+	cat <<"EOF_cronjobscript" | tee -a $6
+	sleep ${WAITTIME}
 done
 EOF_cronjobscript
 	echo "Make cronjob script executable: $6"
@@ -63,7 +67,7 @@ EOF_cronjobscript
 
 	if [ -f /etc/init.d/tgapi ]; then mv -f /etc/init.d/tgapi /etc/init.d/tgapi.bkp; fi
 	
-	cat <<EOF_tgapiservicescript | /etc/init.d/tgapi
+	cat <<EOF_tgapiservicescript | tee ${7}
 #!/bin/sh
 # Copyright (c) 2020 TorGuard forum user 19807409
 
@@ -74,13 +78,13 @@ USE_PROCD=1
 
 start_service() {
 	procd_open_instance
-	procd_set_param command /usr/bin/tgapitest
+	procd_set_param command ${6}
 	procd_set_param respawn
 	procd_close_instance
 }
 EOF_tgapiservicescript
-	echo "Make init script executable: /etc/init.d/tgapi"
-	chmod +x /etc/init.d/tgapi
+	echo "Make init script executable: ${7}"
+	chmod +x ${7}
 }
 
 # Get TorGuard server connection info with curl
@@ -94,7 +98,7 @@ downloadinfo () {
 # get connection information from torguard server and set variables
 gettginfo () {
 	downloadinfo "${1}" "${2}" "${3}" "${4}" "${5}"
-	createapidemoscript "${1}" "${2}" "${3}" "${4}" "${5}" "${TGAPITEST}" "${LOOPWAITTIME}"
+	createapidemoscript "${1}" "${2}" "${3}" "${4}" "${5}" "${TGAPITEST}" "${SERVICEFILE}" "${LOOPWAITTIME}"
 }
 
 # Delete wireguard interface
@@ -158,8 +162,8 @@ MYIPADDRESS=""
 
 # create torguard api server test script with current settings
 TGAPITEST="/usr/bin/tgapitest"
+SERVICEFILE="/etc/init.d/tgapi"
 LOOPWAITTIME=300
-
 # Each server in a string must be provided by server and port "server:port" and separated by space "srv1:1234 srv2:5678"
 TGSERVERLIST="${14}" # TorGuard Server List separated by space, "srv1:1234 srv2:5678"
 # TorGuard credentials
