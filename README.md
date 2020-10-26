@@ -14,6 +14,8 @@ TorGuard related OpenWRT scripts
       - [Validation loop script](#validation-loop-script)
       - [tgapi service](#tgapi-service)
       - [Example for New York shared server](#example-for-new-york-shared-server)
+        - [Convert your public key to API format](#convert-your-public-key-to-api-format)
+        - [Example API URL](#example-api-url)
   - [speedperf](#speedperf)
     - [Install speed perf](#install-speed-perf)
 
@@ -122,13 +124,22 @@ I wrote a demo scratch service file which can be used instead of cronjob, it is 
 
 #### Example for New York shared server
 
+first you need to convert your WG public key into API used formatting
+
+##### Convert your public key to API format
+
+replacing suffix `=` with `%3D`
+
+- Example:
+  `AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJLLL=`
+  to
+  `AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJLLL%3D`
+
+##### Example API URL
+
 - Example: Open in your browser:
 
     `https://User1:Pass1@173.244.200.119:1443/api/v1/setup?public-key=AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJLLL%3D`
-
-- Old Example (old, not working anymore): Open in your browser:
-
-    `https://User1:Pass1@173.244.200.119:1443/api/v1/setup?public-key=AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJLLL=`
 
 ## speedperf
 
