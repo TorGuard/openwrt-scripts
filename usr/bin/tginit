@@ -1,24 +1,5 @@
 #!/bin/sh
 # Copyright (c) 2020 TorGuard forum user 19807409
-# Example single usage: 	tginit "VPNUsername" "VPNPass" "tgwg" "0" "0" "41820" "1420" "AA" "25" "0" "1" "1" "1.2.3.4:1443" 
-# Example serverlist usage:	tginit "VPNUsername" "VPNPass" "tgwg" "0" "1" "41820" "1420" "AA" "25" "0" "0" "1" "1.2.3.4:1443 5.6.7.8:1443 9.10.11.12:1443" 
-# 	In example about with serverlist:	route allowed ip's is disabled for each entry ass wekk as  enable manually
-#						Do not create host routes to peers enabled, please uncheck before use.
-#
-# Download with curl:
-# 	rm -f /usr/bin/tginit;curl -o /usr/bin/tginit https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/tginit-openwrt.sh && chmod +x /usr/bin/tginit;
-# 	rm -f /usr/bin/tginstall;curl -o /usr/bin/tginstall https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/tginstall-openwrt.sh && chmod +x /usr/bin/tginstall
-#
-# Download with wget
-# 	rm -f /usr/bin/tginit;wget -O /usr/bin/tginit https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/tginit-openwrt.sh;chmod +x /usr/bin/tginit;
-# 	rm -f /usr/bin/tginstall;wget -O /usr/bin/tginstall https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/tginstall-openwrt.sh && chmod +x /usr/bin/tginstall
-#
-# Change your credentials and server:
-#	TGSERVERLIST="123.123.123.123:1443 124.125.124.125:1443"
-#	sed -i "s/YourVPNUsername/${TGUSER}/" /usr/bin/tginstall
-#	sed -i "s/YourVPNPassword/${TGPASS}/" /usr/bin/tginstall
-#	sed -i "s/TorguardServer1:1443 TorguardServer2:1443 TorguardServer3:1443/${TGSERVERLIST}/" /usr/bin/tginstall
-#
 getmyipTorGuard () {
 	#$1 - VPN Username $2 - VPN Password $3 - Wireguard Endpoint $4 - Wireguard Port $5 - My wireguard public key
 	URL="https://updates.torguard.biz/cgi-bin/whatismyip.pl"
@@ -51,7 +32,7 @@ createapidemoscript () {
 	if [ -f ${6} ]; then mv -f ${6} ${6}.bkp; fi
 	cat <<EOF_cronjobscript | tee $6
 #!/bin/sh
-# Copyright (c) 2020 TorGuard forum user 19807409
+# ${COPYRIGHTLINE}
 # endless loop running every 1 minutes (60 seconds)
 WAITTIME=${8}
 while true
@@ -70,7 +51,7 @@ EOF_cronjobscript
 	
 	cat <<EOF_tgapiservicescript | tee ${7}
 #!/bin/sh /etc/rc.common
-# Copyright (c) 2020 TorGuard forum user 19807409
+# ${COPYRIGHTLINE}
 
 START=50
 STOP=50
@@ -165,6 +146,11 @@ TGINFO=""
 DESCRIPTION=""
 MYIPADDRESS=""
 
+# copyright vars
+AUTHOR="TorGuard forum user 19807409"
+YEAR=$(date +%Y)
+COPYRIGHTLINE="Copyright (c) ${YEAR} ${AUTHOR}"
+
 # create torguard api server test script with current settings
 TGAPITEST="/usr/bin/tgapitest"
 SERVICEFILE="/etc/init.d/tgapi"
@@ -186,6 +172,36 @@ USEBUILTINIPV6="${10}"	# Use builtin IPv6-management	0 to disable, 1 to enable
 ROUTEALLOWEDIPS="${11}"	# Route allowed IPs, 0 to disable, 1 to enable
 FIREWALLZONE="${12}"	# Assign firewall-zone, 1 is wan, 0 is lan, default: 1
 TGPRIVKEY="${13}"		# this is your peers wireguard private key, if not passed/empty, new keypairs will be generated
+
+# usage info and examples vars
+INFOEXAMPLESINGLEIP='Example single ip usage: 	tginit "VPNUsername" "VPNPass" "wg" "0" "0" "41820" "1420" "AA" "25" "0" "1" "1" "AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJLLL=" "1.2.3.4:1443"'
+INFOEXAMPLEIPLIST='Example serverlist usage:	tginit "VPNUsername" "VPNPass" "tgwg" "0" "1" "41820" "1420" "AA" "25" "0" "0" "1" "AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJLLL=" "1.2.3.4:1443 5.6.7.8:1443 9.10.11.12:1443"'
+EXAMPLEIPLISTEXTRA="In example about with serverlist:	route allowed ip's is disabled for each entry
+									Do not create host routes to peers enabled, please uncheck before use."
+INFOCLEANUP='Cleanup/Uninstall:
+ 	rm -f /usr/bin/tgapitest /usr/bin/tginit /usr/bin/tginstall /usr/bin/tginit-uci-basic /etc/init.d/tgapi /etc/config/torguard'
+
+INFOCURLDOWNLOAD='Download with curl:
+ 	rm -f /usr/bin/tginit;curl -o /usr/bin/tginit https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/tginit-openwrt.sh && chmod +x /usr/bin/tginit;
+ 	rm -f /usr/bin/tginstall;curl -o /usr/bin/tginstall https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/tginstall-openwrt.sh && chmod +x /usr/bin/tginstall'
+
+INFOWGETDOWNLOAD='Download with wget
+ 	rm -f /usr/bin/tginit;wget -O /usr/bin/tginit https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/tginit-openwrt.sh;chmod +x /usr/bin/tginit;
+ 	rm -f /usr/bin/tginstall;wget -O /usr/bin/tginstall https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/tginstall-openwrt.sh && chmod +x /usr/bin/tginstall'
+
+INFOCREDENTIALS='Change your credentials and server:
+	TGSERVERLIST="123.123.123.123:1443 124.125.124.125:1443"
+	sed -i "s/YourVPNUsername/${TGUSER}/" /usr/bin/tginstall
+	sed -i "s/YourVPNPassword/${TGPASS}/" /usr/bin/tginstall
+	sed -i "s/TorguardServer1:1443 TorguardServer2:1443 TorguardServer3:1443/${TGSERVERLIST}/" /usr/bin/tginstall'
+
+echo "${INFOEXAMPLESINGLEIP}
+${INFOEXAMPLEIPLIST}
+${EXAMPLEIPLISTEXTRA}
+${INFOCLEANUP}
+${INFOCURLDOWNLOAD}
+${INFOWGETDOWNLOAD}
+${INFOCREDENTIALS}"
 
 if [ -n "$TGPRIVKEY" ]; then
     echo "API key from /etc/config/torguard OK - ${TGPRIVKEY}"
