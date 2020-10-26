@@ -42,7 +42,7 @@ helper script for tginit. You can pass only 2 variables:
 - (1) openwrt interface name, default is wg and will be used if no vars are passed
 - (2) interface number, default is 0. Currently, _please make sure that there is no interface of same name before usage_
 
-all other values are retrieved from [/etc/torguard](etc/config/torguard).
+all other values are retrieved from [/etc/config/torguard](etc/config/torguard).
 
 ### tginit
 
