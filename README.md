@@ -160,6 +160,6 @@ chmod +x /usr/bin/speedperf
 
 ## FAQ (Freqently Asked Question)
 
-Frequently Asked Questions on Wiki: https://github.com/TorGuard/openwrt-scripts/wiki#faq
+Frequently Asked Questions on Wiki: https://github.com/TorGuard/openwrt-scripts/wiki#faq-frequently-asked-questions
 
-[![Frequently Asked Questions](https://camo.githubusercontent.com/f27ce1937372cdd4dd6d360f508667885a066603/68747470733a2f2f692e6962622e636f2f637257707a6d4d2f6661712e706e67)](https://github.com/TorGuard/openwrt-scripts/wiki#faq)
+[![Frequently Asked Questions](https://camo.githubusercontent.com/f27ce1937372cdd4dd6d360f508667885a066603/68747470733a2f2f692e6962622e636f2f637257707a6d4d2f6661712e706e67)](https://github.com/TorGuard/openwrt-scripts/wiki#faq-frequently-asked-questions)
