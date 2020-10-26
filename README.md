@@ -1,7 +1,7 @@
 # TorGuard related OpenWRT scripts
 ![OpenWRT Logo](https://raw.githubusercontent.com/openwrt/openwrt/master/logo.svg)
 
-- [openwrt-scripts](#openwrt-scripts)
+- [TorGuard related OpenWRT scripts](#torguard-related-openwrt-scripts)
   - [TorGuard Wireguard Installation](#torguard-wireguard-installation)
     - [download and install with wget](#download-and-install-with-wget)
     - [download and install with curl](#download-and-install-with-curl)
@@ -17,6 +17,7 @@
         - [Example API URL](#example-api-url)
   - [speedperf](#speedperf)
     - [Install speed perf](#install-speed-perf)
+  - [FAQ (Freqently Asked Question)](#faq-freqently-asked-question)
 
 ## TorGuard Wireguard Installation
 
@@ -156,5 +157,9 @@ wget -O /usr/bin/speedperf https://github.com/TorGuard/openwrt-scripts/raw/maste
 # set speedperf bin as executable
 chmod +x /usr/bin/speedperf
 ```
-## FAQ
+
+## FAQ (Freqently Asked Question)
+
+Frequently Asked Questions on Wiki: https://github.com/TorGuard/openwrt-scripts/wiki#faq
+
 [![Frequently Asked Questions](https://camo.githubusercontent.com/f27ce1937372cdd4dd6d360f508667885a066603/68747470733a2f2f692e6962622e636f2f637257707a6d4d2f6661712e706e67)](https://github.com/TorGuard/openwrt-scripts/wiki#faq)
