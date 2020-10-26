@@ -263,7 +263,7 @@ for i in ${TGSERVERLIST}; do
 	WGSERVER=$(echo ${TGINFO} | awk -F'[,]' '{print $7}' | awk -F'[:]' '{print $2}' | sed 's/"//g') && echo "Endpoint host: ${WGSERVER}"
 	WGPORT=$(echo ${TGINFO} | awk -F'[,]' '{print $8}' | awk -F'[:]' '{print $2}' | sed 's/"//g' | sed 's/}//g') && echo "Endpoint Port: ${WGPORT}"
 	CONEXPIRATIONEPOCH=$(echo ${TGINFO} | awk -F'[,]' '{print $9}' | awk -F'[:]' '{print $2}' | sed 's/"//g' | sed 's/}//g') && echo "Expiration date epoch: ${CONEXPIRATIONEPOCH}"
-	CONEXPIRATIONHUMAN=$(date -d @${CONEXPIRATIONEPOCH}) && echo "Expiration date: ${CONEXPIRATIONEPOCH}"
+	CONEXPIRATIONHUMAN=$(date -d @${CONEXPIRATIONEPOCH}) && echo "Expiration date: ${CONEXPIRATIONHUMAN}"
 	echo "create new wireguard interface with torguards server: $i"
 	addwginterface "${WGINTERFACE}${WGIFNR}" "${PRIVATE}" "${TMPPORT}" "${CLIENTIP}" "${MTU}" "${TMPFWMARK}" "${USEBUILTINIPV6}" "${NOHOSTROUTE}" "${DESCRIPTION}" "${WGPUBLIC}" "${ALLOWEDIPS}" "${WGSERVER}" "${WGPORT}" "${KEEPALIVE}" "${ROUTEALLOWEDIPS}" "${FIREWALLZONE}" "${ZONEINTERFACES}"
 done
