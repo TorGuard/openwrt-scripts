@@ -55,7 +55,7 @@ Currently only whitelisted/whitelabeled keys work and to get one can be performe
 - dumping the keys/config with TorGuard client on any pc
   
     ```shell
-    # echo show full config of TorGuard client
+    # show full config of TorGuard client
     wg showconf torguard-wg
     ```
 
