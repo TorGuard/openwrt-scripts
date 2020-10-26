@@ -26,14 +26,14 @@ Installation can be performed by running [tginstall](usr/bin/tginstall):
 ### download and install with wget
 
 ```shell
-wget -O /usr/bin/tginstall https://github.com/TorGuard/openwrt-scripts/raw/master/usr/bin/tginstall
+wget -O /usr/bin/tginstall https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/usr/bin/tginstall
 chmod +x /usr/bin/tginstall && tginstall
 ```
 
 ### download and install with curl
 
 ```shell
-curl -o /usr/bin/tginstall https://github.com/TorGuard/openwrt-scripts/raw/master/usr/bin/tginstall
+curl -o /usr/bin/tginstall https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/usr/bin/tginstall
 chmod +x /usr/bin/tginstall && tginstall
 ```
 
