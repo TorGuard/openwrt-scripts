@@ -122,11 +122,11 @@ I wrote a demo scratch service file which can be used instead of cronjob, it is 
 
 #### Example for New York shared server
 
-- Example: Open if your browser:
+- Example: Open in your browser:
 
     `https://User1:Pass1@173.244.200.119:1443/api/v1/setup?public-key=AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJLLL%3D`
 
-- Old Example (old, not working anymore): Open if your browser:
+- Old Example (old, not working anymore): Open in your browser:
 
     `https://User1:Pass1@173.244.200.119:1443/api/v1/setup?public-key=AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJLLL=`
 
