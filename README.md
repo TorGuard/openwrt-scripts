@@ -78,10 +78,11 @@ Public key for API usage has to be converted first into appropriate format by re
 
 #### API Expiration
 
-Currently every connection will work for 15 minutes, no disconnect will happen, but after 15 minutes you client will lose ability to connect to internet. To prevent this, one can run either own cronjob or start simply a service which runs by default every 5 minutes ensuring that config is extended for next 5 minutes.
+Currently every connection will work for 15 minutes, no disconnect will happen, but after 15 minutes your client will lose ability to connect to the internet. To prevent this, one could either run a cronjob or start a service tgapi which runs by default every 5 minutes ensuring that the config is extended for 15 minutes from the timestamp API call is executed.
 
-- _This does not restrict a user, to run same job/endless loop/... on any other PC as a backup to ensure that config used will never expire. Good example is use with mobile phone where one would be very restricted in keeping connection valid without to lose it._
-- To extend, currently used method by this script is to run simply API call which does extend in Torguard's system the use
+- _This does not restrict a user, to run same job/endless loop/... on any other PC as a backup to ensure that config used will never expire._
+  _Good example is use with mobile phone where one would be very restricted in keeping connection valid without to lose it. If you use this service on a router and you have ability to run tgapi on some other device, this would ensure that your config never expires._
+- Currently used method by this script is to run the API call which does extend validity period in Torguard's system/backend 
 - **If your device already has no internet, running api call would immediately let it work without reconnect or network restart**
 
 #### Validation loop script
