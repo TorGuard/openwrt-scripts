@@ -34,16 +34,14 @@ config wireguard_tg0
 	option upgrade '0'
 	option tgprivkey ''
 	option wgapipubkey ''
-	option timeoutfix '1'
+	option apifix '1'
+	option apifixtimeout '60'
 
 config specification 'spec_wireguard_proto'
 	list proto 'udp'
 	
 config specification 'spec_wireguard_ports'
 	list port '1443'
-
-config specification 'spec_wireguard_api_v1'
-	list api_v1 'api/v1/setup?public-key='
 
 config specification 'spec_openvpn_proto'
 	list proto 'udp'
