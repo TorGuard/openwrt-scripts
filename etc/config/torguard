@@ -42,6 +42,9 @@ config specification 'spec_wireguard_proto'
 config specification 'spec_wireguard_ports'
 	list port '1443'
 
+config specification 'spec_wireguard_api_v1'
+	list api_v1 'api/v1/setup?public-key='
+
 config specification 'spec_openvpn_proto'
 	list proto 'udp'
 	list proto 'tcp'
