@@ -29,10 +29,12 @@ uci set torguard.@interface_tg0[-1].nohostroute='0'
 
 uci add torguard wireguard_tg0
 uci set torguard.@wireguard_tg0[-1].description='TorGuard - United States (New York)'
-uci set torguard.@wireguard_tg0[-1].public_key=''
+uci set torguard.@wireguard_tg0[-1].server_public_key=''
 uci add_list torguard.@wireguard_tg0[-1].allowed_ips='0.0.0.0/0'
 uci set torguard.@wireguard_tg0[-1].endpoint_host='173.244.200.119'
 uci set torguard.@wireguard_tg0[-1].endpoint_port='1443'
+uci set torguard.@wireguard_tg0[-1].vpn_dns0='10.9.0.1'
+uci set torguard.@wireguard_tg0[-1].vpn_dns1='10.8.0.1'
 uci set torguard.@wireguard_tg0[-1].persistent_keepalive='25'
 uci set torguard.@wireguard_tg0[-1].route_allowed_ips='1'
 uci set torguard.@wireguard_tg0[-1].tgprivkey=''

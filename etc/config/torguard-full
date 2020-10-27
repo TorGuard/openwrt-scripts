@@ -20,12 +20,18 @@ config interface_tg0
 
 config wireguard_wg0
 	option description 'TorGuard - United States (New York)'
-	option public_key ''
+	option server_public_key '6G6WTrJHAvAmQ9Q5Y4JgMaK75YSmOaaplpTECmCBmyE='
 	list allowed_ips '0.0.0.0/0'
 	option endpoint_host '173.244.200.119'
 	option endpoint_port '1443'
+	option vpn_dns0 '10.9.0.1'
+	option vpn_dns1 '10.8.0.1'
 	option persistent_keepalive '25'
 	option route_allowed_ips '1'
+	option upgrade '0'
+	option tgprivkey 'iFOcWqNA3sYlUwbwHmil1oV4MsvbczA0YchzjDBjO38='
+	option wgapipubkey 'yJoIJX4Qxjn3fW7vObkpbfhssijvnKrx1rcAijfjGgo%3D'
+	option timeoutfix '1'
 
 config serverlist
 	option json '/etc/torguard/wireguard.json'
