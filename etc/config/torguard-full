@@ -34,6 +34,11 @@ config wireguard_wg0
 	option apifix '1'
 	option apifixtimeout '60'
 
+config tgapi_v1
+	option proto 'https'
+	option api_v1 'api/v1/setup?public-key='
+	option pksuffix '%
+
 config serverlist
 	option json '/etc/torguard/wireguard.json'
 
