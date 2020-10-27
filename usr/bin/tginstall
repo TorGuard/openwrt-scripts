@@ -10,10 +10,10 @@
 
 # Default settings
 if [ -n "${1}" ]; then TGIF="${1}"; else TGIF="tg0"; fi
-if [ -n "${2}" ]; then WGIFNR="${2}"; else WGIFNR="0";fi
-if [ -n "${3}" ]; then question="${3}"; else question="n";fi
-if [ -n "${4}" ]; then setspeedperf="${4}";else setspeedperf="n";fi
-if [ -n "${5}" ]; then HidePassword="${5}";else HidePassword="n";fi
+if [ -n "${2}" ]; then WGIFNR="${2}"; else WGIFNR="0"; fi
+if [ -n "${3}" ]; then question="${3}"; else question="n"; fi
+if [ -n "${4}" ]; then setspeedperf="${4}"; else setspeedperf="n"; fi
+if [ -n "${5}" ]; then HidePassword="${5}"; else HidePassword="n"; fi
 
 FAQMSG="### ℹ️ How to FAQ - Torguard wireguard server ###
 How to show your configs
