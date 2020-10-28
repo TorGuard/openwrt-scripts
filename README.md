@@ -53,7 +53,7 @@ chmod +x /usr/bin/tginstall && tginstall
 
 ### tginstall
 
-- [default path](bin/tginstall): `/usr/bin/tginstall`
+- [default path](usr/bin/tginstall): `/usr/bin/tginstall`
 
 helper script for tginit. You can pass only 2 variables:
 
