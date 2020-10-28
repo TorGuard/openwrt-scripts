@@ -1,0 +1,71 @@
+#!/bin/sh
+# Copyright (c) 2020 TorGuard forum user 19807409
+# download bins
+setDbin () {
+  # use curl or wget
+  CURLBIN="/usr/bin/curl"
+  WGETBIN="/usr/bin/wget"
+  DBINFOUNDMSG1="OK - found:"
+  DBINNOTFOUNDMSG1="NOT FOUND"
+  DBINFOUNDCURLMSG1="curl: ${DBINFOUNDMSG1} - ${CURLBIN}"
+  DBINFOUNDWGETMSG1="wget: ${DBINFOUNDMSG1} - ${WGETBIN}"
+  if [ -f ${CURLBIN} ]; then
+    echo "${DBINFOUNDCURLMSG1}"
+    DBIN="${CURLBIN} -o"
+    DBINAPI="${CURLBIN} -k"
+  elif [ -f ${WGETBIN} ]; then
+    echo "${DBINFOUNDWGETMSG1}"
+    DBIN="${WGETBIN} -O"
+    DBINAPI="${WGETBIN} --no-check-certificate -qO-"
+  else
+    echo "curl: ${DBINNOTFOUNDMSG1}"
+    echo "wget: ${DBINNOTFOUNDMSG1}"
+
+    read -p "Script could not find curl or wget, do you want to try to install curl (y/n)? " askcurlinstall
+    case "$askcurlinstall" in 
+      y|Y ) echo "try to install curl from opkg...";opkg update && opkg install curl;if [ -f ${CURLBIN} ]; then askwgetinstall="n"; else askwgetinstall="y"; fi;;
+      n|N ) read -p "User choice is not to install curl ... do you want to try to install wget (y/n)? " askwgetinstall;;
+      * ) echo "${INVALIDCHOICEMSG1}"; exit;;
+    esac
+    case "$askwgetinstall" in 
+      y|Y ) echo "try to install wget from opkg...";opkg update && opkg install wget;;
+      n|N ) if [ -f ${CURLBIN} ]; then echo "askwgetinstall... skip due to selected curl"; else echo "script can not find curl or wget which is required, please install curl or wget before running this script and ensure that your internet connection is available." && exit; fi;;
+      * ) echo "${INVALIDCHOICEMSG1}"; exit;;
+    esac
+
+    if [ -f ${CURLBIN} ]; then
+      echo "${DBINFOUNDCURLMSG1}"
+    elif [ -f ${WGETBIN} ]; then
+      echo "${DBINFOUNDWGETMSG1}"
+    else
+      DBIN="ERROR: script requires curl or wget with ssl support, installation failed" &&  echo "$DBIN
+      Install curl with:
+
+        opkg update
+        opkg install curl
+
+      or wget with SSL support:
+
+        opkg update
+        opkg install wget"
+      exit
+    fi
+  fi
+}
+
+setDbin
+BINSOUTDIR="/usr/bin"
+BINS="tgfunctions tginit tginit-uci-basic tginstall tguninstall tgupgrade speedperf tgsetup"
+
+if [ -f /etc/config/torguard ]; then
+	mv -f /etc/config/torguard /etc/config/torguard.old
+fi
+
+for i in ${BINS}; do
+	if [ -f /usr/bin/${i} ]; then
+		rm -f /usr/bin/${i}
+	fi
+	${DBIN} /usr/bin/${i} https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/usr/bin/${i}
+	chmod +x /usr/bin/${i}
+done
+tginstall
