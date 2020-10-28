@@ -74,7 +74,13 @@ case "$setspeedperf" in
 esac
 
 case "$WGAPIFIX" in
-  1|y|Y ) echo "apifix:         enabled";echo "apifixtimeout:  ${WGAPIFIXTIMEOUT}";echo "Enable apifixtimeout service: yes";/etc/init.d/tgapi enable;/etc/init.d/tgapi start;TFIXSTATUS=$(/etc/init.d/tgapi status);echo "tgapi status: ${TFIXSTATUS}";;
+  1|y|Y ) echo "apifix:         enabled";
+          echo "apifixtimeout:  ${WGAPIFIXTIMEOUT}";
+          echo "Enable apifixtimeout service: yes";
+          ${TGAPIBIN} enable;
+          ${TGAPIBIN} start;
+          TFIXSTATUS=$(${TGAPIBIN} status);
+          echo "tgapi status: ${TFIXSTATUS}";;
   0|n|N ) echo "apifix: disabled";;
   * ) echo "apifix: ${INVALIDCHOICEMSG1}";;
 esac
@@ -533,7 +539,7 @@ setTginitMsgs () {
    rm -f ${BINSOUTDIR}/tgapitest ${BINSOUTDIR}/tginit \
      ${BINSOUTDIR}/tginstall \
      ${BINSOUTDIR}/tginit-uci-basic \
-     /etc/init.d/tgapi \
+     ${TGAPIBIN} \
      ${CONFSOUTDIR}/torguard"
 
   INFOCURLDOWNLOADMSG1="Download with curl:
