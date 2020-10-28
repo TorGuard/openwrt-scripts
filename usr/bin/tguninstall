@@ -4,10 +4,28 @@
 source tgfunctions
 LOGFILE="tguninstall"
 UNINSTALLSCRIPTS=1			# 1 - keeps scripts on uninstall
-UNINSTALLCONFIGS=0			# 1 - keeps configs in /etc/config on uninstall
+UNINSTALLCONFIGS=1			# 1 - keeps configs in /etc/config on uninstall
+
+if [ -f /etc/config/torguard ]; then
+	mv -f /etc/config/torguard /etc/config/torguard.old
+fi
+if [ -f /etc/config/speedperf ]; then
+	mv -f /etc/config/speedperf /etc/config/speedperf.old
+fi
+if [ -f /etc/init.d/tginit ]; then
+	rm -f /etc/init.d/tginit
+fi
+if [ -f /usr/bin/tgapitest ]; then
+	rm -f /usr/bin/tgapitest
+fi
+
+mv -f /etc/config/torguard /etc/config/torguard.old
+mv -f /etc/config/speedperf /etc/config/speedperf.old
+
 if  [[ ${ENABLELOGGING} == 1 ]]; then 
 	# logInitVars && logCleanupOldLogFolder && initLogFiles && 
 	logInitVars && initLogFiles
+	if  [[ ${ENABLELOGGING} == 1 ]]; then 
 	tgUninstallMainRun | tee -a ${LOGFILEDIR}/${LOGFILE}/${LOGFILE}.${LOGEXT}
 else
 	tgUninstallMainRun
