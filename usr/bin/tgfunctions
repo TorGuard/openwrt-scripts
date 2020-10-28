@@ -858,7 +858,7 @@ tgUninstallMainRun () {
 tgUpgradeMainRun () {
 	globalVars
 	if  [[ ${UPGRADESCRIPTS} == 1 ]]; then 
-		upgradeScripts
+		upgradeBins
 	fi
 	if  [[ ${UPGRADECONFIGS} == 1 ]]; then 
 		upgradeConfigs
