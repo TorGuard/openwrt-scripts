@@ -1,5 +1,13 @@
+
+---
+
+<a href="https://github.com/TorGuard/openwrt-scripts/wiki#faq-frequently-asked-questions"><img src="https://raw.githubusercontent.com/wiki/TorGuard/openwrt-scripts/assets/images/faq.png" width="50"></a>
+<a href="https://torguard.net/"><img src="https://raw.githubusercontent.com/wiki/TorGuard/openwrt-scripts/assets/images/torguard-logo.png" width="200"></a>
+<a href="https://github.com/openwrt/openwrt"><img src="https://raw.githubusercontent.com/openwrt/openwrt/master/logo.svg" width="200"></a>
+
+---
+
 # TorGuard related OpenWRT scripts
-![OpenWRT Logo](https://raw.githubusercontent.com/openwrt/openwrt/master/logo.svg)
 
 - [TorGuard related OpenWRT scripts](#torguard-related-openwrt-scripts)
   - [TorGuard Wireguard Installation](#torguard-wireguard-installation)
@@ -8,6 +16,7 @@
   - [Script descriptions](#script-descriptions)
     - [tginstall](#tginstall)
     - [tginit](#tginit)
+    - [tgfunctions](#tgfunctions)
     - [torguard's wireguard api v1](#torguards-wireguard-api-v1)
       - [API Expiration](#api-expiration)
       - [Validation loop script](#validation-loop-script)
@@ -16,12 +25,15 @@
         - [Convert your public key to API format](#convert-your-public-key-to-api-format)
         - [Example API URL](#example-api-url)
   - [speedperf](#speedperf)
-    - [Install speed perf](#install-speed-perf)
+    - [speedperf - show all settings](#speedperf---show-all-settings)
+    - [speedperf default settings](#speedperf-default-settings)
+    - [Install speed perf manually](#install-speed-perf-manually)
+    - [How to start speedperf script](#how-to-start-speedperf-script)
   - [FAQ (Freqently Asked Question)](#faq-freqently-asked-question)
 
 ## TorGuard Wireguard Installation
 
-Installation can be performed by running [tginstall](usr/bin/tginstall):
+Installation can be performed by running [/usr/bin/tginstall](usr/bin/tginstall):
 
 ### download and install with wget
 
@@ -41,7 +53,7 @@ chmod +x /usr/bin/tginstall && tginstall
 
 ### tginstall
 
-- default path: `/usr/bin/tginstall`
+- [default path](bin/tginstall): `/usr/bin/tginstall`
 
 helper script for tginit. You can pass only 2 variables:
 
@@ -52,9 +64,16 @@ all other values are retrieved from [/etc/config/torguard](etc/config/torguard).
 
 ### tginit
 
-- default path: `/usr/bin/tginit`
+- [default path](usr/bin/tginit): `/usr/bin/tginit`
+- logfile:      `/var/log/torguard/tginit/tginit.log`
 
 Torguard initialization script. Script generates new keypair and retrieves wireguard interface options from TorGuard server to which a user connects to with your torguard credentials, then it creates wireguard interface. After script finishes, please recheck your new interface if all values are there and if everything is ok, reboot your device.
+
+### tgfunctions
+
+All function of all scripts are currently in file /use/bin/tgfunctions.
+
+- [default path](usr/bin/tgfunctions): `/usr/bin/tgfunctions`
 
 ### torguard's wireguard api v1
 
@@ -62,10 +81,10 @@ Currently only whitelisted/whitelabeled keys work and to get one can be performe
 
 - dumping the keys/config with TorGuard client on any pc
   
-    ```shell
-    # show full config of TorGuard client
-    wg showconf torguard-wg
-    ```
+  ```shell
+  # show full config of TorGuard client
+  wg showconf torguard-wg
+  ```
 
 - check your TorGuard clients debug log
 - using TorGuard's wireguard configuration tool
@@ -76,7 +95,9 @@ Public key for API usage has to be converted first into appropriate format by re
 
 - Usage:
 
-    `https://[USER]:[PASS]@[SERVER]:[PORT]/api/v1/setup?public-key=[YOURPUBLICKEY]`
+  ```log
+  https://[USER]:[PASS]@[SERVER]:[PORT]/api/v1/setup?public-key=[YOURPUBLICKEY]`
+  ```
 
 #### API Expiration
 
@@ -84,12 +105,12 @@ Currently every connection will work for 15 minutes, no disconnect will happen, 
 
 - _This does not restrict a user, to run same job/endless loop/... on any other PC as a backup to ensure that config used will never expire._
   _Good example is use with mobile phone where one would be very restricted in keeping connection valid without to lose it. If you use this service on a router and you have ability to run tgapi on some other device, this would ensure that your config never expires._
-- Currently used method by this script is to run the API call which does extend validity period in Torguard's system/backend 
+- Currently used method by this script is to run the API call which does extend validity period in Torguard's system/backend
 - **If your device already has no internet, running api call would immediately let it work without reconnect or network restart**
 
 #### Validation loop script
 
-- default path:  `/usr/bin/tgapitest`
+- [default path](usr/bin/tgapitest):  `/usr/bin/tgapitest`
 
 This script extends/validates connection to keep your wg active. Current restriction set by TorGuard is 15 minutes, please check always directly on torguard homepage/forum for any changes on this.
 Script can run on every linux system.
@@ -99,8 +120,7 @@ If it uses wget or curl depends only on tginstall/tginit process finding/using e
 
 - default path: `/etc/init.d/tgapi`
 
-
-I wrote a demo scratch service file which can be used instead of cronjob, it is very simple, please extend it according to your needs
+Demo service file which can be used instead of cronjob is created by tginit, it is very simple, please extend it according to your needs
 
 - to enable on boot and start it, simply run
 
@@ -139,13 +159,46 @@ replacing suffix `=` with `%3D`
 
 - Example: Open in your browser:
 
-    `https://User1:Pass1@173.244.200.119:1443/api/v1/setup?public-key=AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJLLL%3D`
+    ```log
+    https://User1:Pass1@173.244.200.119:1443/api/v1/setup?public-key=AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJLLL%3D
+    ```
 
 ## speedperf
 
-Speedperf is a script performing iperf3 test with defined servers.  [Current public script](usr/bin/speedperf) uses only default client.
+- [Speedperf](usr/bin/speedperf) is a script performing iperf3 test with defined servers. [/usr/bin/speedperf](usr/bin/speedperf) uses only default client.
+- Check [/etc/config/speedperf](etc/config/speedperf) for more info about default config.
+- Default config with iperf3 will compress all logs into folder: `/var/log/speedperf/iperf3`
 
-### Install speed perf
+### speedperf - show all settings
+
+to show full list of available servers and their settings and set closest/fastest to your location
+
+```shell
+uci show speedperf
+```
+
+### speedperf default settings
+
+- Default settings
+  - [x] Default Server: `EU central - Germany`
+    - Server URL: `speedtest.wtnet.de`
+  - [x] Compress single logs: `1` (yes)
+  - [x] Compress folder: `1` (yes)
+    - [x] tar.gz archive: `/var/log/speedperf/iperf3/speedperf_default_client_[DATE]-[EPOCH]_[IPERF3SERVERURL]`
+  - [x] Logdir: `/var/log/speedperf`
+  - [x] Logfile: `speedperf_default_client`
+  - [x] Pidfile: `/var/run/speedperf_default_client.pid`
+  - [x] Storage: `/var/log/speedperf/iperf3`
+  - [x] Tests
+    - [x] Repetitions: `10`
+    - [x] normal
+    - [x] reverse
+    - [x] tcp test
+      - [x] Parallel connections tcp: `10`
+    - [x] udp test
+      - [x] Parallel connections udp: `10`
+
+### Install speed perf manually
 
 ```shell
 # Get speedperf bin
@@ -158,8 +211,14 @@ wget -O /usr/bin/speedperf https://github.com/TorGuard/openwrt-scripts/raw/maste
 chmod +x /usr/bin/speedperf
 ```
 
+### How to start speedperf script
+
+1. Run with [default settings](etc/config/speedperf)
+
+   ```shell
+   speedperf
+   ```
+
 ## FAQ (Freqently Asked Question)
 
-Frequently Asked Questions on Wiki: https://github.com/TorGuard/openwrt-scripts/wiki#faq-frequently-asked-questions
-
-[![Frequently Asked Questions](https://camo.githubusercontent.com/f27ce1937372cdd4dd6d360f508667885a066603/68747470733a2f2f692e6962622e636f2f637257707a6d4d2f6661712e706e67)](https://github.com/TorGuard/openwrt-scripts/wiki#faq-frequently-asked-questions)
+<a href="https://github.com/TorGuard/openwrt-scripts/wiki#faq-frequently-asked-questions"><img src="https://raw.githubusercontent.com/wiki/TorGuard/openwrt-scripts/assets/images/faq.png" width="14"> Frequently Asked Questions on Wiki</a>

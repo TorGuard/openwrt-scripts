@@ -23,12 +23,24 @@ config interface_tg0
 
 config wireguard_tg0
 	option description 'TorGuard - United States (New York)'
-	option public_key ''
+	option server_public_key ''
 	list allowed_ips '0.0.0.0/0'
 	option endpoint_host '173.244.200.119'
 	option endpoint_port '1443'
+	option vpn_dns0 '10.9.0.1'
+	option vpn_dns1 '10.8.0.1'
 	option persistent_keepalive '25'
 	option route_allowed_ips '1'
+	option upgrade '0'
+	option tgprivkey ''
+	option wgapipubkey ''
+	option apifix '1'
+	option apifixtimeout '60'
+
+config tgapi_v1
+	option proto 'https'
+	option api_v1 'api/v1/setup?public-key='
+	option pksuffix '%3D'
 
 config specification 'spec_wireguard_proto'
 	list proto 'udp'

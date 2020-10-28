@@ -1,0 +1,14 @@
+#!/bin/sh
+# Copyright (c) 2020 TorGuard forum user 19807409
+# import script related functions
+source tgfunctions
+LOGFILE="tguninstall"
+UNINSTALLSCRIPTS=1			# 1 - keeps scripts on uninstall
+UNINSTALLCONFIGS=0			# 1 - keeps configs in /etc/config on uninstall
+if  [[ ${ENABLELOGGING} == 1 ]]; then 
+	# logInitVars && logCleanupOldLogFolder && initLogFiles && 
+	logInitVars && initLogFiles
+	tgUninstallMainRun | tee -a ${LOGFILEDIR}/${LOGFILE}/${LOGFILE}.${LOGEXT}
+else
+	tgUninstallMainRun
+fi

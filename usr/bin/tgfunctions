@@ -1,0 +1,961 @@
+#!/bin/sh
+# Copyright (c) 2020 TorGuard forum user 19807409
+restartNetwork () {
+  /etc/init.d/firewall restart
+  /etc/init.d/network restart
+}
+
+preinitchecks () {
+  SETTINGSMSG1="### SETTINGS ###
+Unattended install:             ${question}
+Install speedperf:              ${setspeedperf}
+
+### 🔐 TorGuard credentials ###
+TorGuard Username: ${TGUSER}
+TorGuard Password: ${TGPASS}
+
+### 🔐 TorGuard interface ###
+TorGuard interface:             ${TGIF}
+Wireguard interface:            ${WGINTERFACE}
+🆔 Wireguard interface number:   ${WGIFNR}
+Assign to firewall zone:        ${FIREWALLZONE}
+                                (0 - lan, 1 - wan)
+Do not create routes for hosts: ${NOHOSTROUTE}
+                                (0 - creates routes for allowed hosts , 1 - does not create routes for allowed hosts)
+Listen port:                    ${LISTENPORT}
+MTU:                            ${MTU}
+Firewall mark:                  ${FWMARK}
+Use builtin IPv6-management:    ${DELEGATE}
+
+Persistent Keep Alive:          ${KEEPALIVE}
+Route Allowed IPs:              ${ROUTEALLOWEDIPS}
+
+🛡️ Torguard wireguard server: 
+Endpoint host:                  ${ENDPOINT}
+Endpoint host port:             ${ENPOINTPORT}
+Wireguard priv key:             ${WGPRIVKEY}
+Wireguard api pub key:          ${WGAPIPUBKEY}
+
+# Openwrt update/upgrade options
+Openwrt dependencies:           ${DEPS}
+Upgrade dependencies:           ${WGUPGRADE}
+
+# 🗜️ Torguard API Fix variables
+TorGuard API Fix:               ${WGAPIFIX}
+                                (0 - disabled, 1 - enabled)
+TorGuard API Fix Timeout        ${WGAPIFIXTIMEOUT}
+                                (if not specified then seconds, otherwise s,m,h for second, minute, hour)"
+
+  # print tginstallsettings
+  case "$question" in
+  y|Y ) read -p "${SETTINGSMSG1}
+
+--- tginstall Settings
+${SETTINGSMSG1}
+---
+
+Please check all settings and continue if everything is ok.
+
+Do you want continue (y/n)? " answer;
+        read -p "Do you want to install iperf3 and speedperf scripts (y/n)?" setspeedperf;;
+  n|N ) echo "unattended: yes"; answer="y";;
+  * ) echo "${INVALIDCHOICEMSG1}"; exit;;
+  esac
+}
+
+postinitchecks () {
+case "$setspeedperf" in 
+  y|Y ) echo "install speedperf: yes";
+        opkg update && opkg install ${DEPSSPEEDPERF};${DBIN} ${CONFSOUTDIR}/speedperf ${TGSCRIPTSURL2}/speedperf;
+        ${DBIN} ${BINSOUTDIR}/speedperf ${TGSCRIPTSURL1}/speedperf;
+        chmod +x  ${BINSOUTDIR}/speedperf;;
+  n|N ) echo "install speedperf: no";;
+  * ) echo "install speedperf: ${INVALIDCHOICEMSG1}"; exit;;
+esac
+
+case "$WGAPIFIX" in
+  1|y|Y ) echo "apifix:         enabled";
+          echo "apifixtimeout:  ${WGAPIFIXTIMEOUT}";
+          echo "Enable apifixtimeout service: yes";
+          ${TGAPIBIN} enable;
+          ${TGAPIBIN} start;
+          TFIXSTATUS=$(${TGAPIBIN} status);
+          echo "tgapi status: ${TFIXSTATUS}";;
+  0|n|N ) echo "apifix: disabled";;
+  * ) echo "apifix: ${INVALIDCHOICEMSG1}";;
+esac
+}
+
+getTorguardUciValues () {
+  # $1 - ${TGIF} - torguard config interace name - default tg
+  # $1 = $WGIFNR
+  # 🔐 TorGuard credentials
+  TGUSER=$(uci get torguard.@credentials_${TGIF}[0].username) && echo "get TGUSER value... ${TGUSER}"
+  TGPASS=$(uci get torguard.@credentials_${TGIF}[0].password) && echo "get TGPASS value... ${TGPASS}"
+  # 🆔 TorGuard interface
+  WGIFNR=$(uci get torguard.${TGIF}.ifstartnr) && echo "get WGIFNR value... ${WGIFNR}"
+  FIREWALLZONE=$(uci get torguard.${TGIF}.zone) && echo "get FIREWALLZONE value... ${FIREWALLZONE}"
+  WGINTERFACE=$(uci get torguard.${TGIF}.ifname) && echo "get WGINTERFACE value... ${WGINTERFACE}"
+  NOHOSTROUTE=$(uci get torguard.@interface_${TGIF}[0].nohostroute) && echo "get NOHOSTROUTE value... ${NOHOSTROUTE}"
+  LISTENPORT=$(uci get torguard.@interface_${TGIF}[0].listen_port) && echo "get TGUSER value... ${LISTENPORT}"
+  MTU=$(uci get torguard.@interface_${TGIF}[0].mtu) && echo "get MTU value... ${MTU}"
+  FWMARK=$(uci get torguard.@interface_${TGIF}[0].fwmark) && echo "get FWMARK value... ${FWMARK}"
+  DELEGATE=$(uci get torguard.@interface_${TGIF}[0].delegate) && echo "get DELEGATE value (use IPv6) ... ${DELEGATE}"
+  ROUTEALLOWEDIPS=$(uci get torguard.@wireguard_${TGIF}[0].route_allowed_ips) && echo "get ROUTEALLOWEDIPS value... ${ROUTEALLOWEDIPS}"
+  KEEPALIVE=$(uci get torguard.@wireguard_${TGIF}[0].persistent_keepalive) && echo "get KEEPALIVE value... ${KEEPALIVE}"
+  ENDPOINT=$(uci get torguard.@wireguard_${TGIF}[0].endpoint_host) && echo "get ENDPOINT value... ${ENDPOINT}"
+  WGPRIVKEY=$(uci get torguard.@wireguard_${TGIF}[0].tgprivkey) && echo "get WGPRIVKEY value... ${WGPRIVKEY}"
+  WGAPIPUBKEY=$(uci get torguard.@wireguard_${TGIF}[0].wgapipubkey) && echo "get WGAPIPUBKEY value... ${WGAPIPUBKEY}"
+  WGUPGRADE=$(uci get torguard.@wireguard_${TGIF}[0].upgrade) && echo "get WGUPGRADE value... ${WGUPGRADE}"
+  # 🗜️ Torguard API Fix variables
+  WGAPIFIX=$(uci get torguard.@wireguard_${TGIF}[0].apifix) && echo "get WGAPIFIX value... ${WGAPIFIX}"
+  WGAPIFIXTIMEOUT=$(uci get torguard.@wireguard_${TGIF}[0].apifixtimeout) && echo "get WGAPIFIXTIMEOUT value... ${WGAPIFIXTIMEOUT}"
+  # 🛡️ Torguard server [host]:[port]
+  ENPOINTPORT=$(uci get torguard.@wireguard_${TGIF}[0].endpoint_port) && echo "get ENPOINTPORT value... ${ENPOINTPORT}"
+}
+
+setDbin () {
+  # use curl or wget
+  CURLBIN="/usr/bin/curl"
+  WGETBIN="/usr/bin/wget"
+  DBINFOUNDMSG1="OK - found:"
+  DBINNOTFOUNDMSG1="NOT FOUND"
+  DBINFOUNDCURLMSG1="curl: ${DBINFOUNDMSG1} - ${CURLBIN}"
+  DBINFOUNDWGETMSG1="wget: ${DBINFOUNDMSG1} - ${WGETBIN}"
+  if [ -f ${CURLBIN} ]; then
+    echo "${DBINFOUNDCURLMSG1}"
+    DBIN="${CURLBIN} -o"
+    DBINAPI="${CURLBIN} -k"
+  elif [ -f ${WGETBIN} ]; then
+    echo "${DBINFOUNDWGETMSG1}"
+    DBIN="${WGETBIN} -O"
+    DBINAPI="${WGETBIN} --no-check-certificate -qO-"
+  else
+    echo "curl: ${DBINNOTFOUNDMSG1}"
+    echo "wget: ${DBINNOTFOUNDMSG1}"
+
+    read -p "Script could not find curl or wget, do you want to try to install curl (y/n)? " askcurlinstall
+    case "$askcurlinstall" in 
+      y|Y ) echo "try to install curl from opkg...";opkg update && opkg install curl;if [ -f ${CURLBIN} ]; then askwgetinstall="n"; else askwgetinstall="y"; fi;;
+      n|N ) read -p "User choice is not to install curl ... do you want to try to install wget (y/n)? " askwgetinstall;;
+      * ) echo "${INVALIDCHOICEMSG1}"; exit;;
+    esac
+    case "$askwgetinstall" in 
+      y|Y ) echo "try to install wget from opkg...";opkg update && opkg install wget;;
+      n|N ) if [ -f ${CURLBIN} ]; then echo "askwgetinstall... skip due to selected curl"; else echo "script can not find curl or wget which is required, please install curl or wget before running this script and ensure that your internet connection is available." && exit; fi;;
+      * ) echo "${INVALIDCHOICEMSG1}"; exit;;
+    esac
+
+    if [ -f ${CURLBIN} ]; then
+      echo "${DBINFOUNDCURLMSG1}"
+    elif [ -f ${WGETBIN} ]; then
+      echo "${DBINFOUNDWGETMSG1}"
+    else
+      DBIN="ERROR: script requires curl or wget with ssl support, installation failed" &&  echo "$DBIN
+      Install curl with:
+
+        opkg update
+        opkg install curl
+
+      or wget with SSL support:
+
+        opkg update
+        opkg install wget"
+      exit
+    fi
+  fi
+}
+
+setDbinAlternative () {
+# use curl or wget
+if [ -f ${BINSOUTDIR}/curl ]; then
+  echo "curl: OK - found: /usr/bin/curl"
+  DBIN="/usr/bin/curl -o"
+  DBINAPI="/usr/bin/curl -k"
+elif [ -f ${BINSOUTDIR}/wget ]; then
+  echo "wget: OK - found: /usr/bin/wget, download init script"
+  DBIN="/usr/bin/wget --no-check-certificate -O"
+  DBINAPI="/usr/bin/wget --no-check-certificate -qO-"
+else
+  echo "curl: not found"
+  echo "wget: not found"
+  echo "try to install curl from opkg..."
+  opkg update && opkg install curl
+fi
+}
+
+setscriptmsgs () {
+FAQMSG="### ℹ️ How to FAQ - Torguard wireguard server ###
+How to show your configs
+- Show full torguard config:      uci show torguard
+- Show only default server:       uci show torguard.@wireguard_tg0[0]
+
+How to set your configs
+- Set/edit/change server:             uci set torguard.@wireguard_tg0[0].endpoint_host='173.244.200.119'
+- Set/edit/change description:        uci set torguard.@wireguard_tg0[0].description='wg0 (TorGuard)'
+- Set/edit/change allowed ips:        uci set torguard.@wireguard_tg0[0].allowed_ips='0.0.0.0/0'
+- Set/edit/change endpoint port:      uci set torguard.@wireguard_tg0[0].endpoint_port='1443'
+- Set/edit/change keepalive:          uci set torguard.@wireguard_tg0[0].persistent_keepalive='25'
+- Set/edit/change route allowed ip's: uci set torguard.@wireguard_tg0[0].route_allowed_ips='1'
+- Remove allowed ips list entry:      uci del_list torguard.@wireguard_tg0[0].allowed_ips='0.0.0.0/0'
+- Add additional allowed ips:         uci add_list torguard.@wireguard_tg0[0].allowed_ips='0.0.0.0/0'
+
+After changing value with uci, you have to commit changes
+- Commit changes:                 uci commit torguard"
+
+TORGUARDAPIPRIVKEYINFO="PRIVATE KEY INFO:Please use TorGuard wireguard tool or connect with with TorGuard client on any other machine, then get your private key with:
+
+  wg showconf torguard-wg | grep PrivateKey
+
+Example: iFOcWqNA3sYlUwbwHmil1oV4MsvbczA0YchzjDBjO38="
+
+INVALIDCHOICEMSG1="invalid choice, please use only y or Y for yes and n or N for no"
+APIFIXTIMEOUTMSG1="Set time Examples:
+  Accepted options:
+    s - for seconds
+    m - for minutes
+    h - for hours
+    d - for days
+    ...
+  
+  60 seconds - 60
+               or 60s
+  1 minute   - 60
+               or 1m
+  1 hour     - 3600
+               or 60m
+               or 1h
+  1 day      - 86400
+               or 1440m
+               or 24h
+               or 1d"
+APIFIXMSG1="---
+ℹ️ APIFIX Info
+- If you use server with connection expiration,
+  then you need to use API fix because connection
+  requires to validate within specific time, if
+  you do not know, recommended is to enable API fix
+- if you enable apifix, you can change deault timeout
+---"
+}
+
+# TGINIT Funcions
+getmyipTorGuard () {
+	URL="https://updates.torguard.biz/cgi-bin/whatismyip.pl"
+	MYIPADDRESS=$(${DBINAPI} ${URL})
+}
+
+# Wireguarrd key generation
+apiformatpubkey () {
+	APIPUBKEY=$(echo "${PUBLIC}" | sed 's/=/%3D/') && echo "apiformatpubkey... formating api public key ... OK: ${APIPUBKEY}"
+}
+
+createwgpubkey () {
+	PUBLIC=$(echo "${PRIVATE}" | wg pubkey) && echo "createwgpubkey... generating public key ... OK: ${PUBLIC}" && apiformatpubkey
+}
+
+genwgkey () {
+	PRIVATE=$(wg genkey) && echo "genwgkey... generating private key ... OK: ${PRIVATE}" &&	createwgpubkey
+}
+
+checkAndSetTgprivkey () {
+  TGPRIVKEY="$(uci get torguard.@wireguard_tg0[0].tgprivkey)"
+	if [ -n "$TGPRIVKEY" ]; then
+		echo "API key from ${CONFSOUTDIR}/torguard OK - ${TGPRIVKEY}"
+		PRIVATE="${TGPRIVKEY}"
+		createwgpubkey
+	else
+		echo "create new private and public keys..." && genwgkey
+    uci set torguard.@wireguard_tg0[0].tgprivkey="${PRIVATE}"
+	fi
+  uci set torguard.@wireguard_tg0[0].wgapipubkey="${APIPUBKEY}"
+}
+
+createapidemoscript () {
+	#$1 - VPN Username
+	#$2 - VPN Password
+	#$3 - Wireguard Endpoint
+	#$4 - Wireguard Port
+	#$5 - My wireguard public key
+	#$6 - Output filepath
+	#$7 - Service filepath
+	#$8 - Wait time
+	#wget -O $6 --no-check-certificate https://$1:$2@$3:$4/api/v1/setup?public-key=$5
+	URL="https://${1}:${2}@${3}:${4}/api/v1/setup?public-key=${5}"
+	if [ -f ${6} ]; then mv -f ${6} ${6}.bkp; fi
+	cat <<EOF_cronjobscript | tee $6
+#!/bin/sh
+# ${COPYRIGHTLINE}
+# endless loop running every 1 minutes (60 seconds)
+WAITTIME=${8}
+while true
+do
+	${DBINAPI} ${URL}
+EOF_cronjobscript
+
+	cat <<"EOF_cronjobscript" | tee -a $6
+	sleep ${WAITTIME}
+done
+EOF_cronjobscript
+	echo "Make cronjob script executable: $6"
+	chmod +x $6
+
+	if [ -f ${7} ]; then mv -f ${7} ${7}.bkp; fi
+	
+	cat <<EOF_tgapiservicescript | tee ${7}
+#!/bin/sh /etc/rc.common
+# ${COPYRIGHTLINE}
+
+START=50
+STOP=50
+
+USE_PROCD=1
+
+reload_service() {
+	procd_send_signal ${6}
+}
+
+start_service() {
+	procd_open_instance
+	procd_set_param command ${6}
+	procd_set_param respawn
+	procd_close_instance
+}
+EOF_tgapiservicescript
+	echo "Make init script executable: ${7}"
+	chmod +x ${7}
+}
+
+# Get TorGuard server connection info with curl
+downloadinfo () {
+	#$1 - VPN Username $2 - VPN Password $3 - Wireguard Endpoint $4 - Wireguard Port $5 - My wireguard public key
+	URL="https://${1}:${2}@${3}:${4}/api/v1/setup?public-key=${5}"
+	echo "API: https://$1:$2@$3:$4/api/v1/setup?public-key=${5}"
+	TGINFO=$($DBINAPI ${URL})
+}
+
+# get connection information from torguard server and set variables
+gettginfo () {
+	downloadinfo "${1}" "${2}" "${3}" "${4}" "${5}"
+	createapidemoscript "${1}" "${2}" "${3}" "${4}" "${5}" "${TGAPITEST}" "${SERVICEFILE}" "${LOOPWAITTIME}"
+}
+
+# Delete wireguard interface
+deletewginterface () {
+	echo "delete existing default peer 0 and commit changes..." && uci delete network.@wireguard_${1}[0] && uci commit network
+	echo "delete existing wireguard interface and commit changes..." && uci delete network.${1} && uci commit network
+	echo "restart network..." && /etc/init.d/network restart
+}
+
+# Add wireguard interface
+addwginterface () {
+	echo "add new network interface (torguard wireguard interface)" && uci add network interface
+	echo "rename new interface to: ${1}" && uci rename network.@interface[-1]=${1}
+	echo "set new interface's proto: wireguard" && uci set network.@interface[-1].proto='wireguard'
+	echo "set new interface's private key: ${2}" && uci set network.@interface[-1].private_key="${2}"
+	echo "set new interface's listen port: ${3}" && uci set network.@interface[-1].listen_port="${3}"
+	echo "set new interface's addresses: ${4}" && uci add_list network.@interface[-1].addresses="${4}"
+	echo "set new interface's MTU (default 1420): ${5}" && uci set network.@interface[-1].mtu="${5}"
+	echo "set new interface's fwmark (default 0xFE): 0x${6}" && uci set network.@interface[-1].fwmark="0x${6}"
+	echo "use of builtin IPv6-management (disabled by default, 0): ${7}" &&	uci set network.@interface[-1].delegate="${7}"
+	echo "set new interface's nohostrouter (disabled by default, 0): ${8}" && uci set network.@interface[-1].nohostroute="${8}"
+	echo "add wireguard peer ${1}" && uci add network wireguard_${1}
+	echo "add wireguard peer ${1} description: ${9}" && uci set network.@wireguard_${1}[-1].description="${9}"
+	echo "add wireguard peer ${1} public key: ${10}" && uci set network.@wireguard_${1}[-1].public_key="${10}"
+	echo "add wireguard peer ${1} allowed ip's: ${11}" && uci add_list network.@wireguard_${1}[-1].allowed_ips="${11}"
+	echo "add wireguard peer ${1} Endpoint host: ${12}" && uci set network.@wireguard_${1}[-1].endpoint_host="${12}"
+	echo "add wireguard peer ${1} Endpoint port: ${13}" && uci set network.@wireguard_${1}[-1].endpoint_port="${13}"
+	echo "add wireguard peer ${1} Keepalive: ${14}" && uci set network.@wireguard_${1}[-1].persistent_keepalive="${14}"
+	echo "add wireguard peer ${1} Route allowed ip's: ${15}" && uci set network.@wireguard_${1}[-1].route_allowed_ips="${15}"
+	echo "commit network ..." && uci commit network
+	echo "Add created wireguard interface to lan zone (this will overwrite any other firewall.@zone[0].network setting, please recheck if using non default settings)"
+	uci set firewall.@zone[${16}].network="${17} ${1}"
+	uci commit firewall
+}
+
+setTgInitTempPortFWIfNR () {
+	TMPPORT=$(( $LISTENPORT - 1 ))
+	TMPFWMARK=$(printf "%x\n" $(( $(printf "%d\n" ${FWMARK}) - 1 )))
+	TMPWGIFNR=$(( $WGIFNR - 1 ))
+}
+
+tginitAddWgInterface () {
+	echo "set vars for server for ip: ${1} ..."
+	TMPPORT=$(( $TMPPORT + 1 )) && echo "PORT: $TMPPORT"
+	TMPFWMARK=$(printf "%x\n" $(( $(printf "%d\n" 0x${TMPFWMARK}) + 1 ))) && echo "FWMARK: $TMPFWMARK"
+	TMPWGIFNR=$(( $TMPWGIFNR + 1 )) && echo "Wireguard interface number: $TMPWGIFNR"
+	DESCRIPTION="${WGINTERFACE}${WGIFNR} (TorGuard)" && echo "Description: $DESCRIPTION"
+	ZONEINTERFACES=$(uci get firewall.@zone[${FIREWALLZONE}].network | sed "s/${WGINTERFACE}${WGIFNR}//g") && echo "Firewall zone: $ZONEINTERFACES"
+	ENDPOINT=$(echo ${1} | awk -F'[:]' '{print $1}') && echo "Endpoint host: $ENDPOINT"
+	ENDPOINTPORT=$(echo ${1} | awk -F'[:]' '{print $2}') && echo "Endpoint port: $ENDPOINTPORT"
+	echo "delete wireguard interface with same name... (${1})"
+	# delete current interface for a case that IP is not
+	deletewginterface "${WGINTERFACE}${WGIFNR}"
+	getmyipTorGuard && echo "my current IP address after deletion of ${WGINTERFACE}${WGIFNR}: ${MYIPADDRESS}"
+	# from here internet connection must be present
+	if [ -n "$TGPRIVKEY" ]; then
+		echo "using API key from ${CONFSOUTDIR}/torguard: OK (${TGPRIVKEY})"
+		PRIVATE="${TGPRIVKEY}"
+		createwgpubkey
+	else
+		echo "create new private and public keys..." && genwgkey
+	fi
+	echo "USED PUBLIC AND API KEYS:" && echo "Private: ${PRIVATE}" && echo "Public:  ${PUBLIC}" && echo "API Public key:${APIPUBKEY}"
+	gettginfo "${VPNUSERNAME}" "${VPNPASS}" "${ENDPOINT}" "${ENDPOINTPORT}" "${APIPUBKEY}"
+	WGPUBLIC=$(echo ${TGINFO} | awk -F'[,]' '{print $1}' | awk -F'[:]' '{print $2}' | sed 's/"//g') && echo "Public key: ${WGPUBLIC}"
+	SERVERIP=$(echo ${TGINFO} | awk -F'[,]' '{print $2}' | awk -F'[:]' '{print $2}' | sed 's/"//g') && echo "Peer server: ${SERVERIP}"
+	CLIENTIP=$(echo ${TGINFO} | awk -F'[,]' '{print $3}' | awk -F'[:]' '{print $2}' | sed 's/"//g') && echo "IP Addresses: ${CLIENTIP}"
+	ALLOWEDIPS=$(echo ${TGINFO} | awk -F'[,]' '{print $4}' | awk -F'[:]' '{print $2}' | sed 's/"//g') && echo "Allowd IPs: ${ALLOWEDIPS}"
+	WGDNS1=$(echo ${TGINFO} | awk -F'[,]' '{print $5}' | awk -F'[:]' '{print $2}' | sed 's/"//g' | sed 's/\[//g') && echo "DNS1: ${WGDNS1}"
+	WGDNS2=$(echo ${TGINFO} | awk -F'[,]' '{print $6}' | awk -F'[:]' '{print $1}' | sed 's/"//g' | sed 's/\]//g') && echo "DNS2: ${WGDNS2}"
+	WGSERVER=$(echo ${TGINFO} | awk -F'[,]' '{print $7}' | awk -F'[:]' '{print $2}' | sed 's/"//g') && echo "Endpoint host: ${WGSERVER}"
+	WGPORT=$(echo ${TGINFO} | awk -F'[,]' '{print $8}' | awk -F'[:]' '{print $2}' | sed 's/"//g' | sed 's/}//g') && echo "Endpoint Port: ${WGPORT}"
+	CONEXPIRATIONEPOCH=$(echo ${TGINFO} | awk -F'[,]' '{print $9}' | awk -F'[:]' '{print $2}' | sed 's/"//g' | sed 's/}//g') && echo "Expiration date epoch: ${CONEXPIRATIONEPOCH}"
+	CONEXPIRATIONHUMAN=$(date -d @${CONEXPIRATIONEPOCH}) && echo "Expiration date: ${CONEXPIRATIONHUMAN}"
+	echo "create new wireguard interface with torguards server: ${1}"
+	addwginterface "${WGINTERFACE}${WGIFNR}" "${PRIVATE}" "${TMPPORT}" "${CLIENTIP}" "${MTU}" "${TMPFWMARK}" "${USEBUILTINIPV6}" "${NOHOSTROUTE}" "${DESCRIPTION}" "${WGPUBLIC}" "${ALLOWEDIPS}" "${WGSERVER}" "${WGPORT}" "${KEEPALIVE}" "${ROUTEALLOWEDIPS}" "${FIREWALLZONE}" "${ZONEINTERFACES}"
+}
+
+setCopyright () {
+	YEAR=$(date +%Y)
+	COPYRIGHTLINE="Copyright (c) ${YEAR} ${AUTHOR}"
+}
+
+upgradeConfigs () {
+  for i in ${CONFS}; do
+    if [ -f ${CONFSOUTDIR}/${i} ]; then
+      echo "Upgrade configs: ${i} ... FOUND ${CONFSOUTDIR}/${i}... backing up..."
+      mv -f ${CONFSOUTDIR}/${i} ${CONFSOUTDIR}/${i}.bkp
+    else
+      echo "Upgrade configs: ${i} ... OK - Config not found: ${CONFSOUTDIR}/${i}"
+    fi
+    ${DBIN} ${CONFSOUTDIR}/${i} ${TGSCRIPTSURL2}/${i} && chmod +x ${CONFSOUTDIR}/${i}
+  done
+  # initialize torguard configs
+  ${BINSOUTDIR}/tginit-uci-basic
+}
+
+upgradeBins () {
+  for i in ${BINS}; do
+    if [ -f ${BINSOUTDIR}/${i} ]; then
+      echo "Found bin: ${BINSOUTDIR}/${i} ... upgrading"
+    else
+      echo "Download ${i} ... downloading"
+    fi
+    ${DBIN} ${BINSOUTDIR}/${i} ${TGSCRIPTSURL1}/${i} && chmod +x ${BINSOUTDIR}/${i}
+  done
+}
+
+downloadScripts () {
+  # $1 - TGSCRIPTSURL1="https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/usr/bin"
+  for i in ${BINS}; do
+    if [ -f ${BINSOUTDIR}/${i} ]; then
+      echo "Found bin: ${BINSOUTDIR}/${i} ... not downloading"
+    else
+      echo "Download ${i} ..."
+      ${DBIN} ${BINSOUTDIR}/${i} ${TGSCRIPTSURL1}/${i} && chmod +x ${BINSOUTDIR}/${i}
+    fi
+  done
+}
+
+contstructGitRawUrl () {
+  GITRAWURL="https://raw.githubusercontent.com"
+  GITUSER="TorGuard"
+  GITREPO="openwrt-scripts"
+  GITBRANCH="master"
+  GITFOLDER1="usr/bin"
+  GITFOLDER2="etc/config"
+  # Folder on openwrt where scripts will be saved
+  TGSCRIPTSROOTURL="${GITRAWURL}/${GITUSER}/${GITREPO}/${GITBRANCH}"
+  TGSCRIPTSURL1="${TGSCRIPTSROOTURL}/${GITFOLDER1}"
+  TGSCRIPTSURL2="${TGSCRIPTSROOTURL}/${GITFOLDER2}"
+  #TGSCRIPTSURL1="https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/usr/bin"
+  #TGSCRIPTSURL2="https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/etc/config"
+}
+
+logInitVars () {
+  if [ -f ${CONFSOUTDIR}/torguard ]; then
+    LOGEXT=$(uci get torguard.setupconfig.logext)
+    LOGFILEDIR=$(uci get torguard.setupconfig.logfiledir)
+  else
+    LOGFILEDIR="/var/log/torguard"
+    LOGEXT="log"
+  fi
+  LOGEXT="log"
+}
+
+logCleanupOldLogFolder () {
+  # Check for existing folder and move it to /tmp/[LOGBKPSUFF]
+  LOGBKPSUFF="$(date +%s).backup"
+  if [ -d ${LOGFILEDIR} ]; then
+    echo "Check for existing logs... Logs folder found"
+    mv -f ${LOGFILEDIR} /tmp/${LOGBKPSUFF} && echo "Move log dir... moved existing log folder to /tmp/${LOGBKPSUFF}"
+  else
+    echo "Check for existing logs... Ok ... Logs folder notfound"
+  fi
+}
+
+initLogFiles () {
+  if  [[ $ENABLELOGGING == 1 ]]; then 
+    echo "Log: enabled"
+    mkdir -p ${LOGFILEDIR} && echo "Create new logfolder... OK"
+    for i in ${LOGFILE}; do
+      mkdir -p ${LOGFILEDIR}/${i} && echo "Create new logdir ... OK (${LOGFILEDIR}/${i}" && touch ${LOGFILEDIR}/${i}/${i}.${LOGEXT} && echo "Create new logfile ... OK (${LOGFILEDIR}/${i}/${i}.${LOGEXT})"
+    done
+  else
+    echo "Log: disabled"
+  fi
+}
+
+setTginitMsgs () {
+  TGINITPASSEDVARSINFOMSG1="--- 
+# Variables passed by script
+---
+  TorGuard VPN username:					      ${VPNUSERNAME}
+  TorGuard VPN password:					      ${VPNPASS}
+  Wireguard interface name:				      ${WGINTERFACE}
+  Wireguard interface number:				    ${WGIFNR}
+  do not create host routes to peers:		${NOHOSTROUTE}
+  UDP port for out-/incoming packets:		${LISTENPORT}
+  Maximum Transmission Unit of tunnel:	${MTU}
+  32-bit mark for outgoing packets:		  ${FWMARK}
+  Seconds between keep alive messages:	${KEEPALIVE}
+  Use builtin IPv6-management:			    ${USEBUILTINIPV6}
+  Route allowed IPs:						        ${ROUTEALLOWEDIPS}
+  TorGuard firewall zone:					      ${FIREWALLZONE}
+  TorGuard wireguard private key:			  ${TGPRIVKEY}
+  API Fix                               ${TGAPITEST}
+  API Fix timeout                       ${LOOPWAITTIME}
+  Sevice file path                      ${SERVICEFILE}
+  TorGuard Server List:					        ${TGSERVERLIST}
+---"
+  INFOEXAMPLESINGLEIPMSG1='Example single ip usage:
+  tginit "VPNUsername" "VPNPass" "wg" "0" "0" "41820" "1420" "AA" "25" "0" "1" "1" "AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJLLL=" "1.2.3.4:1443"'
+  INFOEXAMPLEIPLISTMSG1='Example serverlist usage:
+    tginit "VPNUsername" "VPNPass" "wg" "0" "1" "41820" "1420" "AA" "25" "0" "0" "1" "AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJLLL=" "1.2.3.4:1443 5.6.7.8:1443 9.10.11.12:1443"'
+  EXAMPLEIPLISTEXTRAMSG1="In example about with serverlist:	route allowed ip's is disabled for each entry
+									Do not create host routes to peers enabled, please uncheck before use."
+  INFOCLEANUPMSG1="Cleanup/Uninstall:
+   rm -f ${BINSOUTDIR}/tgapitest ${BINSOUTDIR}/tginit \
+     ${BINSOUTDIR}/tginstall \
+     ${BINSOUTDIR}/tginit-uci-basic \
+     ${TGAPIBIN} \
+     ${CONFSOUTDIR}/torguard"
+
+  INFOCURLDOWNLOADMSG1="Download with curl:
+    curl -o ${BINSOUTDIR}/tginit ${TGSCRIPTSURL1}/tginit && chmod +x ${BINSOUTDIR}/tginit
+    curl -o ${BINSOUTDIR}/tginstall ${TGSCRIPTSURL1}/tginstall && chmod +x ${BINSOUTDIR}/tginstall"
+
+  INFOWGETDOWNLOADMSG1="Download with wget
+ 	wget -O ${BINSOUTDIR}/tginit ${TGSCRIPTSURL1}/tginit && chmod +x ${BINSOUTDIR}/tginit
+ 	wget -O ${BINSOUTDIR}/tginstall ${TGSCRIPTSURL1}/tginstall && chmod +x ${BINSOUTDIR}/tginstall"
+
+  INFOCREDENTIALSMSG1="Change your credentials and server:
+	  TGSERVERLIST='123.123.123.123:1443 124.125.124.125:1443'
+	  sed -i 's/YourVPNUsername/${TGUSER}/' ${BINSOUTDIR}/tginstall
+	  sed -i 's/YourVPNPassword/${TGPASS}/' ${BINSOUTDIR}/tginstall
+	  sed -i 's/TorguardServer1:1443 TorguardServer2:1443 TorguardServer3:1443/${TGSERVERLIST}/' ${BINSOUTDIR}/tginstall"
+
+  TGINITFINISHMSG1="Torguard wireguard initialization finished, please reboot to complete"
+  echo "---
+${INFOEXAMPLESINGLEIPMSG1} 
+---
+${INFOEXAMPLEIPLISTMSG1}
+---
+${EXAMPLEIPLISTEXTRAMSG1}
+---
+${INFOCLEANUPMSG1}
+---
+${INFOCURLDOWNLOADMSG1}
+---
+${INFOWGETDOWNLOADMSG1}
+---
+${INFOCREDENTIALSMSG1}
+---"
+}
+
+showTgInitPostMsg1 () {
+	echo "TGINIT - RESULTS"
+	echo "${INFONETWORKINTERFACE}"
+	echo "Show Network inteface: ${WGINTERFACE}${WGIFNR}"
+	uci show network.${WGINTERFACE}${WGIFNR}
+	uci show network.@wireguard_${WGINTERFACE}${WGIFNR}[0]
+	echo "wait 10 seconds before checking for current IP..." && sleep 10
+	INFONETWORKINTERFACE="Network nterface -	${WGINTERFACE}${WGIFNR}
+	( get details : 	uci show network.${WGINTERFACE}${WGIFNR} )
+	( get peer details:	uci show network.@wireguard_${WGINTERFACE}${WGIFNR}[0] )"
+
+	getmyipTorGuard;echo "IP ADDRESS - 		${MYIPADDRESS}"
+}
+
+# tginstall Questionnaire
+tgInstallQuestionnaire () {
+  read -p 'Set VPN Username: ' TORGUARDUSERNAME
+  case "$HidePassword" in 
+    y|Y ) read -sp 'Set VPN Password: ' TORGUARDPASS ;;
+    n|N ) read -p 'Set VPN Password: ' TORGUARDPASS ;;
+    * ) echo "${INVALIDCHOICEMSG1}"; exit;;
+  esac
+  read -p "Entered Username: ${TORGUARDUSERNAME}
+Entered Password: ${TORGUARDPASS}
+
+do you want to continue (y/n)? " setcred
+  case "$setcred" in 
+    y|Y ) uci set torguard.@credentials_${TGIF}[0].username="${TORGUARDUSERNAME}";
+          uci set torguard.@credentials_${TGIF}[0].password="${TORGUARDPASS}";
+          uci commit torguard;
+          ;;
+    n|N ) echo "user abort because entered password/username combinatino is incorrect, script finished and exiting ..."; exit;;
+    * ) echo "${INVALIDCHOICEMSG1}"; exit;;
+  esac
+    read -p "ℹ️ - By not setting your your custom IP, New York's server will be used as default
+
+Do you want to set custom IP (y/n)? " askserv
+  case "$askserv" in 
+    y|Y ) read -p "Set your server ip address: " setserv;
+          uci set torguard.@wireguard_${TGIF}[0].description="TorGuard - Dedicated - ${TGIF}";
+          uci set torguard.@wireguard_${TGIF}[0].endpoint_host="$setserv";
+          read -p 'Set your wireguard private key: ' TORGUARDAPIPRIVKEY;
+          uci set torguard.@wireguard_${TGIF}[0].tgprivkey="${TORGUARDAPIPRIVKEY}";
+          uci set torguard.@wireguard_${TGIF}[0].wgapipubkey="$(echo "${TORGUARDAPIPRIVKEY}" | wg pubkey | sed 's/=/%3D/')";
+          uci commit torguard;;
+    n|N ) echo "using default script server";;
+    * ) echo "${INVALIDCHOICEMSG1}"; exit;;
+  esac
+  read -p "Do you want upgrade dependencies on every run (y/n)? " askupgrade;
+  case "$askupgrade" in 
+    y|Y ) uci set torguard.@wireguard_${TGIF}[0].upgrade="1";uci commit torguard;;
+    n|N ) echo "disabling upgrade on every run...";uci set torguard.@wireguard_${TGIF}[0].upgrade="0";;
+    * ) echo "${INVALIDCHOICEMSG1}"; exit;;
+  esac
+  read -p "Do you want to install/reinstall required dependencies (y/n)? " askinstalldependencies
+  case "$askinstalldependencies" in 
+    y|Y ) opkg update && opkg install ${DEPSFIRSTINSTALL};;
+  #  n|N ) echo "WARNING: skipping installation of required packages, script will continue but will end in errors";;
+    * ) echo "${INVALIDCHOICEMSG1}"; exit;;
+  esac
+  read -p "${APIFIXMSG1}
+
+Do you want to use API fix for connection expiration (y/n)? " askapifix
+  case "$askapifix" in 
+    y|Y ) uci set torguard.@wireguard_${TGIF}[0].apifix='1';
+          uci commit torguard;
+          read -p "Do you want to change default 60 seconds timeout for API fix (not recommended) (y/n)? " askapifixtimeout;;
+    n|N ) askapifixtimeout="$askapifix";echo "apifix API fix: disabled";echo "apifixtimeout: API fix timeout not required because it is disabled" ;;
+    * ) echo "${INVALIDCHOICEMSG1}"; exit ;;
+  esac
+  case "$askapifixtimeout" in 
+    y|Y ) echo ;
+          read -p "${APIFIXTIMEOUTMSG1}
+
+Set apifixtimeout: " setapifixtimeout;
+          uci set torguard.@wireguard_${TGIF}[0].apifixtimeout="${setapifixtimeout}";uci commit torguard;
+          ;;
+    n|N ) setapifixtimeout="$askapifixtimeout";echo "apifixtimeout: API fix timeout not required because it is disabled";;
+    * ) echo "${INVALIDCHOICEMSG1}"; exit;;
+  esac
+  case "$setapifixtimeout" in 
+    y|Y ) uci set torguard.@wireguard_${TGIF}[0].apifixtimeout="${setapifixtimeout}";uci commit torguard;;
+    n|N ) uci set torguard.@wireguard_${TGIF}[0].apifixtimeout="60";uci commit torguard;;
+    * ) echo "${INVALIDCHOICEMSG1}"; exit;;
+  esac
+}
+
+tgInitUciBasic () {
+  uci add torguard torguard
+  uci set torguard.@torguard[-1].enable_logging="${ENABLELOGGING}"
+  uci set torguard.@torguard[-1].logext="${LOGEXT}"
+  uci set torguard.@torguard[-1].logfiledir="${LOGFILEDIR}"
+  uci set torguard.@torguard[-1].binsoutdir="${BINSOUTDIR}"
+  uci set torguard.@torguard[-1].confsoutdir="${CONFSOUTDIR}"
+  uci set torguard.@torguard[-1].bins="${BINS}"
+  uci set torguard.@torguard[-1].configs="${CONFS}"
+  uci set torguard.@torguard[-1].tgapibin="${TGAPIBIN}"
+  uci rename torguard.@torguard[-1]='setupconfig'
+
+  uci add torguard torguard
+  uci set torguard.@torguard[-1].ifname='wg'
+  uci set torguard.@torguard[-1].ifstartnr='0'
+  uci set torguard.@torguard[-1].zone='1'
+  uci rename torguard.@torguard[-1]="${TGIF}"
+
+  uci add torguard credentials_${TGIF}
+  uci set torguard.@credentials_${TGIF}[-1].username="YourVPNUsername"
+  uci set torguard.@credentials_${TGIF}[-1].password="YourVPNPassword"
+
+  uci add torguard interface_${TGIF}
+  uci set torguard.@interface_${TGIF}[-1].proto='wireguard'
+  uci set torguard.@interface_${TGIF}[-1].private_key=''
+  uci set torguard.@interface_${TGIF}[-1].listen_port='51820'
+  uci add_list torguard.@interface_${TGIF}[-1].addresses=''
+  uci set torguard.@interface_${TGIF}[-1].mtu='1420'
+  uci set torguard.@interface_${TGIF}[-1].fwmark='0xFE'
+  uci set torguard.@interface_${TGIF}[-1].delegate='0'
+  uci set torguard.@interface_${TGIF}[-1].nohostroute='0'
+
+  uci add torguard wireguard_${TGIF}
+  uci set torguard.@wireguard_${TGIF}[-1].description='TorGuard - United States (New York)'
+  uci set torguard.@wireguard_${TGIF}[-1].server_public_key=''
+  uci add_list torguard.@wireguard_${TGIF}[-1].allowed_ips='0.0.0.0/0'
+  uci set torguard.@wireguard_${TGIF}[-1].endpoint_host='173.244.200.119'
+  uci set torguard.@wireguard_${TGIF}[-1].endpoint_port='1443'
+  uci set torguard.@wireguard_${TGIF}[-1].vpn_dns0='10.9.0.1'
+  uci set torguard.@wireguard_${TGIF}[-1].vpn_dns1='10.8.0.1'
+  uci set torguard.@wireguard_${TGIF}[-1].persistent_keepalive='25'
+  uci set torguard.@wireguard_${TGIF}[-1].route_allowed_ips='1'
+  uci set torguard.@wireguard_${TGIF}[-1].tgprivkey="${PRIVATE}"
+  uci set torguard.@wireguard_${TGIF}[-1].wgapipubkey="${APIPUBKEY}"
+  uci set torguard.@wireguard_${TGIF}[-1].upgrade='0'
+  uci set torguard.@wireguard_${TGIF}[-1].apifix='1'
+  uci set torguard.@wireguard_${TGIF}[-1].apifixtimeout='1m'
+
+  # save changes
+  uci commit torguard
+}
+
+tgInitUciConstants () {
+  uci add torguard serverlist
+  uci set torguard.@serverlist[-1].json='/etc/torguard/wireguard.json'
+
+  uci add torguard specification
+  uci add_list torguard.@specification[-1].proto='udp'
+  uci rename torguard.@specification[-1]='spec_wireguard_proto'
+
+  uci add torguard specification 
+  uci add_list torguard.@specification[-1].port='1443'
+  uci rename torguard.@specification[-1]='spec_wireguard_ports'
+
+  uci add torguard specification
+  uci add_list torguard.@specification[-1].proto='udp'
+  uci add_list torguard.@specification[-1].proto='tcp'
+  uci rename torguard.@specification[-1]='spec_openvpn_proto'
+
+  uci add torguard specification
+  uci add_list torguard.@specification[-1].port='22'
+  uci add_list torguard.@specification[-1].port='53'
+  uci add_list torguard.@specification[-1].port='80'
+  uci add_list torguard.@specification[-1].port='389'
+  uci add_list torguard.@specification[-1].port='501'
+  uci add_list torguard.@specification[-1].port='443'
+  uci add_list torguard.@specification[-1].port='995'
+  uci add_list torguard.@specification[-1].port='1195'
+  uci add_list torguard.@specification[-1].port='1198'
+  uci add_list torguard.@specification[-1].port='1215'
+  uci add_list torguard.@specification[-1].port='1912'
+  uci add_list torguard.@specification[-1].port='4443'
+  uci add_list torguard.@specification[-1].port='9201'
+  uci rename torguard.@specification[-1]='spec_openvpn_ports'
+
+  uci add torguard specification
+  uci add_list torguard.@specification[-1].cipher='aes-128-gcm'
+  uci rename torguard.@specification[-1]='spec_openvpn_cipher'
+
+  uci add torguard specification
+  uci add_list torguard.@specification[-1].auth='sha1'
+  uci add_list torguard.@specification[-1].auth='sha256'
+  uci add_list torguard.@specification[-1].auth='sha512'
+  uci rename torguard.@specification[-1]='spec_openvpn_auth'
+
+  uci add torguard specification
+  uci add_list torguard.@specification[-1].proto='tcp'
+  uci add_list torguard.@specification[-1].proto='udp'
+  uci add_list torguard.@specification[-1].port='443'
+  uci rename torguard.@specification[-1]='spec_oc'
+
+  uci add torguard specification
+  uci set torguard.@specification[-1].name='TorGuard Public DNS - USA'
+  uci add_list torguard.@specification[-1].dns='104.223.91.194,104.223.91.210'
+  uci rename torguard.@specification[-1]='spec_dns_us1'
+
+  uci add torguard specification
+  uci set torguard.@specification[-1].name='Cloudflare'
+  uci add_list torguard.@specification[-1].dns='1.1.1.1,1.0.0.1'
+  uci rename torguard.@specification[-1]='spec_dns_cloudflare'
+
+  uci add torguard specification
+  uci set torguard.@specification[-1].name='Google'
+  uci add_list torguard.@specification[-1].dns='8.8.8.8,8.8.4.4'
+  uci rename torguard.@specification[-1]='spec_dns_google'
+
+  uci add torguard specification
+  uci set torguard.@specification[-1].name='Level3'
+  uci add_list torguard.@specification[-1].dns='4.2.2.2,4.2.2.3'
+  uci rename torguard.@specification[-1]='spec_dns_opendns'
+
+  uci add torguard specification
+  uci set torguard.@specification[-1].name='OpenDNS'
+  uci add_list torguard.@specification[-1].dns='208.67.222.222,208.67.220.220'
+  uci rename torguard.@specification[-1]='spec_dns_opendns'
+
+  uci add torguard specification
+  uci set torguard.@specification[-1].name='Quad9'
+  uci add_list torguard.@specification[-1].dns='9.9.9.9'
+  uci rename torguard.@specification[-1]='spec_dns_quad9'
+
+  uci add torguard specification
+  uci add_list torguard.@specification[-1].hostname='proxy.torguard.org'
+  uci add_list torguard.@specification[-1].hostname='proxy.torguard.io'
+  uci add_list torguard.@specification[-1].hostname='proxy.secureconnect.me'
+  uci rename torguard.@specification[-1]='spec_proxy_hostnames'
+
+  uci add torguard specification
+  uci add_list torguard.@specification[-1].port='1080'
+  uci add_list torguard.@specification[-1].port='1085'
+  uci add_list torguard.@specification[-1].port='1090'
+  uci rename torguard.@specification[-1]='spec_socks5'
+
+  uci add torguard specification
+  uci add_list torguard.@specification[-1].port='6060'
+  uci add_list torguard.@specification[-1].port='1337'
+  uci add_list torguard.@specification[-1].port='1338'
+  uci add_list torguard.@specification[-1].port='1339'
+  uci add_list torguard.@specification[-1].port='1340'
+  uci add_list torguard.@specification[-1].port='1341'
+  uci add_list torguard.@specification[-1].port='1342'
+  uci add_list torguard.@specification[-1].port='1343'
+  uci rename torguard.@specification[-1]='spec_proxy_http'
+
+  uci add torguard specification
+  uci add_list torguard.@specification[-1].port='23'
+  uci add_list torguard.@specification[-1].port='592'
+  uci add_list torguard.@specification[-1].port='778'
+  uci add_list torguard.@specification[-1].port='489'
+  uci add_list torguard.@specification[-1].port='282'
+  uci add_list torguard.@specification[-1].port='993'
+  uci add_list torguard.@specification[-1].port='465'
+  uci add_list torguard.@specification[-1].port='7070'
+  uci rename torguard.@specification[-1]='spec_proxy_ssl'
+
+  # save changes
+  uci commit torguard
+}
+
+##### scripts main parts
+globalVars () {
+  if [ -f /etc/config/torguard ]; then
+    ENABLELOGGING=$(uci get torguard.setupconfig.enable_logging)
+    BINSOUTDIR="$(uci get torguard.setupconfig.binsoutdir)"
+    CONFSOUTDIR="$(uci get torguard.setupconfig.confsoutdir)"
+    BINS="$(uci get torguard.setupconfig.bins)"
+    CONFS="$(uci get torguard.setupconfig.configs)"
+    TGAPIBIN="$(uci get torguard.setupconfig.tgapibin)"
+  else
+    ENABLELOGGING=1 		# 1 for yes, anything else means no
+    BINSOUTDIR="/usr/bin"
+    CONFSOUTDIR="/etc/config"
+    BINS="tgfunctions tginit tginit-uci-basic tginstall speedperf"
+    CONFS="speedperf"  # "torguard speedperf"
+    TGAPIBIN="/etc/init.d/tgapi"
+  fi
+  logInitVars
+  setDbin
+  contstructGitRawUrl
+}
+
+tgUninstallMainRun () {
+	globalVars
+	if  [[ ${UNINSTALLSCRIPTS} == 1 ]]; then 
+		for b in ${BINS}; do
+			if [ -f ${BINSOUTDIR}/${b} ]; then rm -f ${BINSOUTDIR}/${b} && echo "uninstall ${BINSOUTDIR}/${b} ... OK"; else echo "uninstall ${BINSOUTDIR}/${b} ... not found"; fi
+		done
+	fi
+	if  [[ ${UNINSTALLCONFIGS} == 1 ]]; then 
+		for c in ${CONFS}; do
+			if [ -f ${CONFSOUTDIR}/${c} ]; then rm -f ${CONFSOUTDIR}/${b} && echo "uninstall ${CONFSOUTDIR}/${b} ... OK"; else echo "uninstall ${CONFSOUTDIR}/${b} ... not found"; fi
+		done
+	fi
+}
+
+tgUpgradeMainRun () {
+	globalVars
+	if  [[ ${UPGRADESCRIPTS} == 1 ]]; then 
+		upgradeScripts
+	fi
+	if  [[ ${UPGRADECONFIGS} == 1 ]]; then 
+		upgradeConfigs
+	fi
+}
+
+tgInitMainRun () {
+  echo "set global vars"
+  globalVars
+
+  echo "consturct download and git vars (requirement for setTginitMsgs), set Info message Variables passed by script, usage info, examples vars and current script messages"
+  setTginitMsgs
+
+  # Show variables passed by script
+  echo ${TGINITPASSEDVARSINFOMSG1}
+
+  # copyright vars
+  setCopyright
+
+  # Check if TGPRIVKEY is set in /etc/config/torguard and use it, otherwise generate new keypairs
+  checkAndSetTgprivkey
+
+  # Set TMPPORT, TMPFWMARK and TMPWGIFNR vars (uses LISTENPORT, FWMARK, WGIFNR)
+  setTgInitTempPortFWIfNR
+
+  # add new interface for eache IP from TGSERVERLIST
+  for i in ${TGSERVERLIST}; do
+    tginitAddWgInterface "$i"
+  done
+
+  # restart network and firewall
+  restartNetwork
+
+  showTgInitPostMsg1 
+  echo "$TGINITFINISHMSG1"
+}
+
+tgInitUciBasicMainRun () {
+    globalVars
+    if -f [ ${CONFSOUTDIR}/torguard ]; then
+      rm -f ${CONFSOUTDIR}/torguard && touch ${CONFSOUTDIR}/torguard
+    else
+      touch ${CONFSOUTDIR}/torguard
+    fi
+    tgInitUciBasic
+    tgInitUciConstants
+}
+
+tgInstallMainRun () {
+  echo "set globalVars"
+  globalVars
+  echo "Set script messages"
+  setscriptmsgs
+
+  # ℹ️ Initialize luci configs and install wireguard interface
+  echo "initialize luci configs"
+  downloadScripts
+
+  if [ -f ${CONFSOUTDIR}/torguard ]; then
+    echo "Found: ${CONFSOUTDIR}/torguard (unattended setup)"
+    question="n"
+    setspeedperf="n"
+  else
+    question="y"
+    tgInitUciBasicMainRun
+    tgInstallQuestionnaire
+  fi
+
+  # Get values from torguard config file /etc/config/torguard
+  getTorguardUciValues
+
+  # Pre initialization processes
+  preinitchecks
+
+  # Initialization
+  case "$answer" in 
+    y|Y ) echo "starting $0...";
+          #opkg update && opkg install ${DEPS} ${DEPSOPTIONAL};
+          tginit "${TGUSER}" "${TGPASS}" "${WGINTERFACE}" "${WGIFNR}" "${NOHOSTROUTE}" "${LISTENPORT}" "${MTU}" "${FWMARK}" "${KEEPALIVE}" "${DELEGATE}" "${ROUTEALLOWEDIPS}" "${FIREWALLZONE}" "${WGPRIVKEY}" "${BINSOUTDIR}/tgapitest" "${SERVICEFILE}" "${WGAPIFIXTIMEOUT}" "${ENDPOINT}:${ENPOINTPORT}";;
+    n|N ) echo "user abort, script finished"; exit;;
+    * ) echo "${INVALIDCHOICEMSG1}"; exit;;
+  esac
+
+  # Post initialization processes
+  postinitchecks
+
+  # Script end
+  echo "tginstall script finished" && echo "${FAQMSG}"
+}

@@ -8,216 +8,31 @@
 #if [ -z ${3+x} ]; then question="n" && echo "Questionarrie not submited, using default: ${question}"; else question="${3}" && echo "Questionarrie submitted: ${question}"; fi
 #if [ -z ${4+x} ]; then setspeedperf="n" && echo "Install speedperf not submited, using default: ${setspeedperf}"; else setspeedperf="${4}" && echo "Install speedperf submitted: ${setspeedperf}"; fi
 
+source tgfunctions
 # Default settings
 if [ -n "${1}" ]; then TGIF="${1}"; else TGIF="tg0"; fi
 if [ -n "${2}" ]; then WGIFNR="${2}"; else WGIFNR="0"; fi
 if [ -n "${3}" ]; then question="${3}"; else question="n"; fi
 if [ -n "${4}" ]; then setspeedperf="${4}"; else setspeedperf="n"; fi
 if [ -n "${5}" ]; then HidePassword="${5}"; else HidePassword="n"; fi
-
-FAQMSG="### ℹ️ How to FAQ - Torguard wireguard server ###
-How to show your configs
-- Show full torguard config:      uci show torguard
-- Show only default server:       uci show torguard.@wireguard_tg0[0]
-
-How to set your configs
-- Set/edit/change server:             uci set torguard.@wireguard_tg0[0].endpoint_host='173.244.200.119'
-- Set/edit/change description:        uci set torguard.@wireguard_tg0[0].description='wg0 (TorGuard)'
-- Set/edit/change allowed ips:        uci set torguard.@wireguard_tg0[0].allowed_ips='0.0.0.0/0'
-- Set/edit/change endpoint port:      uci set torguard.@wireguard_tg0[0].endpoint_port='1443'
-- Set/edit/change keepalive:          uci set torguard.@wireguard_tg0[0].persistent_keepalive='25'
-- Set/edit/change route allowed ip's: uci set torguard.@wireguard_tg0[0].route_allowed_ips='1'
-- Remove allowed ips list entry:      uci del_list torguard.@wireguard_tg0[0].allowed_ips='0.0.0.0/0'
-- Add additional allowed ips:         uci add_list torguard.@wireguard_tg0[0].allowed_ips='0.0.0.0/0'
-
-After changing value with uci, you have to commit changes
-- Commit changes:                 uci commit torguard"
-
-TORGUARDAPIPRIVKEYINFO="PRIVATE KEY INFO:Please use TorGuard wireguard tool or connect with with TorGuard client on any other machine, then get your private key with:
-
-  wg showconf torguard-wg | grep PrivateKey
-
-Example: iFOcWqNA3sYlUwbwHmil1oV4MsvbczA0YchzjDBjO38="
-
-INVALIDCHOICEMSG1="invalid choice, please use only y or Y for yes and n or N for no"
-
 # OPKG Dependencies
-DEPS="kmod-wireguard wireguard-tools"
-DEPSOPTIONAL="ipset curl"
-DEPSSPEEDPERF="iperf3"
+if [ -n "${6}" ]; then DEPS="${6}"; else DEPS="kmod-wireguard wireguard-tools"; fi
+if [ -n "${7}" ]; then DEPSOPTIONAL="${7}"; else DEPSOPTIONAL="ipset curl"; fi
+# Speedper dependencies
+if [ -n "${8}" ]; then DEPSSPEEDPERF="${8}"; else DEPSSPEEDPERF="iperf3"; fi
+if [ -n "${9}" ]; then LOGFILE="${8}"; else LOGFILE="tginstall"; fi
+
 DEPSFIRSTINSTALL="$DEPS $DEPSOPTIONAL"
 DEPSASKINSTALL=""
 
-# use curl or wget
-if [ -f /usr/bin/curl ]; then
-  echo "curl: OK - found: /usr/bin/curl"
-  DBIN="/usr/bin/curl -o"
-  DBINAPI="/usr/bin/curl -k"
-elif [ -f /usr/bin/wget ]; then
-  echo "wget: OK - found: /usr/bin/wget, download init script"
-  DBIN="/usr/bin/wget -O"
-  DBINAPI="/usr/bin/wget --no-check-certificate -qO-"
+globalVars
+if  [[ $ENABLELOGGING == 1 ]]; then 
+  # logInitVars && logCleanupOldLogFolder && initLogFiles && 
+  echo "logCleanupOldLogFolder"
+  logCleanupOldLogFolder
+  echo "initLogFiles"
+  initLogFiles
+	tgInstallMainRun | tee -a ${LOGFILEDIR}/${LOGFILE}/${LOGFILE}.${LOGEXT}
 else
-  echo "curl: not found"
-  echo "wget: not found"
-  echo "try to install curl from opkg..."
-  opkg update && opkg install curl
-
-  if [ -f /usr/bin/curl ]; then
-    echo "curl: OK - found: /usr/bin/curl"
-  else
-    DBIN="ERROR: script requires curl or wget with ssl support, installation failed" &&  echo "$DBIN
-    Install curl with:
-
-      opkg update
-      opkg install curl
-
-    or wget-ssl with:
-
-      opkg update
-      opkg install wget-ssl"
-    exit
-  fi
+	tgInstallMainRun
 fi
-
-# ℹ️ Initialize luci configs and install wireguard interface
-if [ -f /usr/bin/tginit-uci-basic ]; then
-  echo "Found: /usr/bin/tginit-uci-basic"
-else
-  echo "Download tginit-uci-basic script..."
-  ${DBIN} /usr/bin/tginit-uci-basic https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/usr/bin/tginit-uci-basic && chmod +x /usr/bin/tginit-uci-basic
-fi
-
-if [ -f /usr/bin/tginit ]; then
-  echo "Found: /usr/bin/tginit"
-else
-  echo "Download tginit script..."
-  ${DBIN} /usr/bin/tginit https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/usr/bin/tginit && chmod +x /usr/bin/tginit;
-fi
-
-if [ -f /etc/config/torguard ]; then
-  echo "Found: /etc/config/torguard (unattended setup)"
-  question="n"
-  setspeedperf="n"
-else
-  question="y"
-  echo "Initialize torguard config file"
-  tginit-uci-basic
-  echo "Please set your torguard credentials which are require for API usage..."
-  read -p 'Set Username: ' TORGUARDUSERNAME
-  case "$HidePassword" in 
-    y|Y ) read -sp 'Set Password: ' TORGUARDPASS;;
-    n|N ) read -p 'Set Password: ' TORGUARDPASS;;
-    * ) echo "Warning: invalid HidePassword value was set/passed, using default value to show password"; read -p 'Set Password: ' TORGUARDPASS;;
-  esac
-  echo "Please confirm if your password and username are correct:";echo "Entered Username: ${TORGUARDUSERNAME}";echo "Entered Password: ${TORGUARDPASS}"
-  read -p "Are entered username/password correct and do you want to continue (y/n)? " setcred
-  case "$setcred" in 
-    y|Y ) uci set torguard.@credentials_${TGIF}[0].username="$TORGUARDUSERNAME";uci set torguard.@credentials_${TGIF}[0].password="$TORGUARDPASS";uci commit torguard;;
-    n|N ) echo "user abort because entered password/username combinatino is incorrect, script finished and exiting ..."; exit;;
-    * ) echo "${INVALIDCHOICEMSG1}"; exit;;
-  esac
-  echo "ℹ️ - By not setting your your custom IP, New York's server will be used as default"
-  read -p "Do you want to set custom IP (y/n)? " askserv
-  case "$askserv" in 
-    y|Y ) read -p "Set your server ip address: " setserv;echo "${TORGUARDAPIPRIVKEYINFO}";read -p 'Set your wireguard private key: ' TORGUARDAPIPRIVKEY;uci set torguard.@wireguard_${TGIF}[0].endpoint_host="$setserv";uci set torguard.@wireguard_${TGIF}[0].wgapipubkey=$(echo "${TORGUARDAPIPRIVKEY}" | wg pubkey | sed 's/=/%3D/');;
-    n|N ) echo "using default script server";;
-    * ) echo "${INVALIDCHOICEMSG1}"; exit;;
-  esac
-  read -p "Do you want upgrade dependencies on every run (y/n)? " askupgrade;
-  case "$askupgrade" in 
-    y|Y ) uci set torguard.@wireguard_${TGIF}[0].upgrade="1";;
-    n|N ) echo "disabling upgrade on every run...";uci set torguard.@wireguard_${TGIF}[0].upgrade="0";;
-    * ) echo "${INVALIDCHOICEMSG1}"; exit;;
-  esac
-  read -p "Do you want to install/reinstall required dependencies (y/n)? " askinstalldependencies
-  case "$askinstalldependencies" in 
-    y|Y ) opkg update && opkg install ${DEPSFIRSTINSTALL};;
-    n|N ) echo "WARNING: skipping installation of required packages, script will continue but will end in errors";;
-    * ) echo "${INVALIDCHOICEMSG1}"; exit;;
-  esac
-fi
-
-# 🔐 TorGuard credentials
-TGUSER=$(uci get torguard.@credentials_${TGIF}[0].username)
-TGPASS=$(uci get torguard.@credentials_${TGIF}[0].password)
-
-# 🆔 TorGuard interface
-WGIFNR=$(uci get torguard.${TGIF}.ifstartnr)
-FIREWALLZONE=$(uci get torguard.${TGIF}.zone)
-WGINTERFACE=$(uci get torguard.${TGIF}.ifname)
-NOHOSTROUTE=$(uci torguard.@interface_${TGIF}[0].nohostroute)
-LISTENPORT=$(uci get torguard.@interface_${TGIF}[0].listen_port)
-MTU=$(uci get torguard.@interface_${TGIF}[0].mtu)
-FWMARK=$(uci get torguard.@interface_${TGIF}[0].fwmark)
-DELEGATE=$(uci get torguard.@interface_${TGIF}[0].delegate)
-ROUTEALLOWEDIPS=$(uci get torguard.@wireguard_${TGIF}[0].route_allowed_ips)
-KEEPALIVE=$(uci get torguard.@wireguard_${TGIF}[0].persistent_keepalive)
-ENDPOINT=$(uci get torguard.@wireguard_${TGIF}[0].endpoint_host)
-WGPRIVKEY=$(uci get torguard.@wireguard_${TGIF}[0].tgprivkey)
-WGAPIPUBKEY=$(uci get torguard.@wireguard_${TGIF}[0].wgapipubkey)
-WGUPGRADE=$(uci get torguard.@wireguard_${TGIF}[0].upgrade)
-
-# 🛡️ Torguard server [host]:[port]
-ENPOINTPORT=$(uci get torguard.@wireguard_${TGIF}[0].endpoint_port)
-
-echo "### SETTINGS ###
-Unattended install:             ${question}
-Install speedperf:              ${speedperf}
-
-### 🔐 TorGuard credentials ###
-TorGuard Username: ${TGUSER}
-TorGuard Password: ${TGPASS}
-
-### 🔐 TorGuard interface ###
-TorGuard interface:             ${TGIF}
-Wireguard interface:            ${WGINTERFACE}
-🆔 Wireguard interface number:   ${WGIFNR}
-Assign to firewall zone:        ${FIREWALLZONE} (0 - lan, 1 - wan)
-Do not create routes for hosts: ${NOHOSTROUTE} (0 - creates routes for allowed hosts , 1 - does not create routes for allowed hosts)
-Listen port:                    ${LISTENPORT}
-MTU:                            ${MTU}
-Firewall mark:                  ${FWMARK}
-Use builtin IPv6-management:    ${DELEGATE}
-
-Persistent Keep Alive:          ${KEEPALIVE}
-Route Allowed IPs:              ${ROUTEALLOWEDIPS}
-
-🛡️ Torguard wireguard server: 
-Endpoint host:                  ${ENDPOINT}
-Endpoint host port:             ${ENPOINTPORT}
-Wireguard priv key:             ${WGPRIVKEY}
-Wireguard api pub key:          ${WGAPIPUBKEY}
-
-# Openwrt update/upgrade options
-Openwrt dependencies:           ${DEPS}
-Upgrade dependencies:           ${WGUPGRADE}"
-
-case "$question" in
-  y|Y ) read -p "Continue (y/n)?" answer;read -p "Do you want to install iperf3 and speedperf scripts (y/n)?" setspeedperf;;
-  n|N ) echo "unattended: yes"; answer="y";;
-  * ) echo "${INVALIDCHOICEMSG1}"; exit;;
-esac
-
-case "$answer" in 
-  y|Y ) echo "starting $0...";
-        #opkg update && opkg install ${DEPS} ${DEPSOPTIONAL};
-        tginit "${TGUSER}" "${TGPASS}" "${WGINTERFACE}" "${WGIFNR}" "${NOHOSTROUTE}" "${LISTENPORT}" "${MTU}" "${FWMARK}" "${KEEPALIVE}" "${DELEGATE}" "${ROUTEALLOWEDIPS}" "${FIREWALLZONE}" "${WGPRIVKEY}" "${ENDPOINT}:${ENPOINTPORT}";;
-  n|N ) echo "user abort, script finished"; exit;;
-  * ) echo "${INVALIDCHOICEMSG1}"; exit;;
-esac
-
-case "$setspeedperf" in 
-  y|Y ) echo "install speedperf: yes";opkg update && opkg install ${DEPSSPEEDPERF};${DBIN} /etc/config/speedperf https://github.com/TorGuard/openwrt-scripts/raw/master/etc/config/speedperf;${DBIN} /usr/bin/speedperf https://github.com/TorGuard/openwrt-scripts/raw/master/usr/bin/speedperf;chmod +x /usr/bin/speedperf;;
-  n|N ) echo "install speedperf: no";;
-  * ) echo "install speedperf: ${INVALIDCHOICEMSG1}"; exit;;
-esac
-
-timeoutfix=$(uci get torguard.@wireguard_tg0[0].timeoutfix)
-case "$timeoutfix" in
-  1|y|Y ) echo "timeoutfix: enabled";echo "Enable timeoutfix service: yes";/etc/init.d/tgapi enable;/etc/init.d/tgapi start;TFIXSTATUS=$(/etc/init.d/tgapi status);echo "tgapi status: ${TFIXSTATUS}";;
-  0|n|N ) echo "timeoutfix: disabled";;
-  * ) echo "timoutfix: ${INVALIDCHOICEMSG1}";;
-esac
-
-echo "tginstall script finished" && echo "${FAQMSG}"
