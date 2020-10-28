@@ -1,0 +1,15 @@
+#!/bin/sh
+# Copyright (c) 2020 TorGuard forum user 19807409
+# import script related functions
+source tgfunctions
+LOGFILE="tgupgrade"
+UPGRADESCRIPTS=1		# 1 - keeps scripts on uninstall
+UPGRADECONFIGS=1			# 1 - renames ${CONFSOUTDIR}/torguard to ${CONFSOUTDIR}/torguard.bkp and creates/downloads latest
+if  [[ ${ENABLELOGGING} == 1 ]]; then 
+	# logInitVars && logCleanupOldLogFolder && initLogFiles && 
+	logInitVars && initLogFiles
+	tgUpgradeMainRun | tee -a ${LOGFILEDIR}/${LOGFILE}/${LOGFILE}.${LOGEXT}
+else
+	tgUpgradeMainRun
+fi
+
