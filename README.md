@@ -1,5 +1,13 @@
+
+---
+
+<a href="https://github.com/TorGuard/openwrt-scripts/wiki#faq-frequently-asked-questions"><img src="https://raw.githubusercontent.com/wiki/TorGuard/openwrt-scripts/assets/images/faq.png" width="50"></a>
+<a href="https://torguard.net/"><img src="https://raw.githubusercontent.com/wiki/TorGuard/openwrt-scripts/assets/images/torguard-logo.png" width="200"></a>
+<a href="https://github.com/openwrt/openwrt"><img src="https://raw.githubusercontent.com/openwrt/openwrt/master/logo.svg" width="200"></a>
+
+---
+
 # TorGuard related OpenWRT scripts
-![OpenWRT Logo](https://raw.githubusercontent.com/openwrt/openwrt/master/logo.svg)
 
 - [TorGuard related OpenWRT scripts](#torguard-related-openwrt-scripts)
   - [TorGuard Wireguard Installation](#torguard-wireguard-installation)
