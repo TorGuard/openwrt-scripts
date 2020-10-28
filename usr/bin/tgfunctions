@@ -836,6 +836,13 @@ globalVars () {
     CONFS="speedperf"  # "torguard speedperf"
     TGAPIBIN="/etc/init.d/tgapi"
   fi
+  DEPS="kmod-wireguard wireguard-tools"
+  DEPSOPTIONAL="ipset curl"
+  DEPSSPEEDPERF="iperf3"
+  DEPSFIRSTINSTALL="$DEPS $DEPSOPTIONAL"
+  DEPSASKINSTALL=""
+# Speedper dependencies
+if [ -n "${8}" ]; then DEPSSPEEDPERF="${8}"; else DEPSSPEEDPERF="iperf3"; fi
   logInitVars
   setDbin
   contstructGitRawUrl

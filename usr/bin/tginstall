@@ -15,16 +15,8 @@ if [ -n "${2}" ]; then WGIFNR="${2}"; else WGIFNR="0"; fi
 if [ -n "${3}" ]; then question="${3}"; else question="n"; fi
 if [ -n "${4}" ]; then setspeedperf="${4}"; else setspeedperf="n"; fi
 if [ -n "${5}" ]; then HidePassword="${5}"; else HidePassword="n"; fi
-# OPKG Dependencies
-if [ -n "${6}" ]; then DEPS="${6}"; else DEPS="kmod-wireguard wireguard-tools"; fi
-if [ -n "${7}" ]; then DEPSOPTIONAL="${7}"; else DEPSOPTIONAL="ipset curl"; fi
-# Speedper dependencies
-if [ -n "${8}" ]; then DEPSSPEEDPERF="${8}"; else DEPSSPEEDPERF="iperf3"; fi
-if [ -n "${9}" ]; then LOGFILE="${8}"; else LOGFILE="tginstall"; fi
 
-DEPSFIRSTINSTALL="$DEPS $DEPSOPTIONAL"
-DEPSASKINSTALL=""
-
+LOGFILE="tginstall"
 globalVars
 if  [[ $ENABLELOGGING == 1 ]]; then 
   # logInitVars && logCleanupOldLogFolder && initLogFiles && 
