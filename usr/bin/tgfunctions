@@ -645,13 +645,12 @@ Do you want to use API fix for connection expiration (y/n)? " askapifix
     * ) echo "${INVALIDCHOICEMSG1}"; exit ;;
   esac
   case "$askapifixtimeout" in 
-    y|Y ) echo ;
-          read -p "${APIFIXTIMEOUTMSG1}
+    y|Y ) read -p "${APIFIXTIMEOUTMSG1}
 
 Set apifixtimeout: " setapifixtimeout;
           uci set torguard.@wireguard_${TGIF}[0].apifixtimeout="${setapifixtimeout}";uci commit torguard;
           ;;
-    n|N ) setapifixtimeout="$askapifixtimeout";echo "apifixtimeout: API fix timeout not required because it is disabled";;
+    n|N ) setapifixtimeout="60";echo "apifixtimeout: API fix timeout not required because it is disabled";;
     * ) echo "${INVALIDCHOICEMSG1}"; exit;;
   esac
   case "$setapifixtimeout" in 
@@ -843,7 +842,7 @@ globalVars () {
     ENABLELOGGING=1 		# 1 for yes, anything else means no
     BINSOUTDIR="/usr/bin"
     CONFSOUTDIR="/etc/config"
-    BINS="tgfunctions tginit tginit-uci-basic tginstall speedperf"
+    BINS="tgfunctions tginit tginit-uci-basic tginstall tguninstall tgupgrade speedperf"
     CONFS="speedperf"  # "torguard speedperf"
     TGAPIBIN="/etc/init.d/tgapi"
   fi
