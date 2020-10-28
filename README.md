@@ -110,7 +110,7 @@ Currently every connection will work for 15 minutes, no disconnect will happen, 
 
 #### Validation loop script
 
-- [default path](usr/bin/tgapitest):  `/usr/bin/tgapitest`
+- default path:  `/usr/bin/tgapitest`
 
 This script extends/validates connection to keep your wg active. Current restriction set by TorGuard is 15 minutes, please check always directly on torguard homepage/forum for any changes on this.
 Script can run on every linux system.
