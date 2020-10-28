@@ -14,9 +14,13 @@
     - [download and install with wget](#download-and-install-with-wget)
     - [download and install with curl](#download-and-install-with-curl)
   - [Script descriptions](#script-descriptions)
-    - [tginstall](#tginstall)
-    - [tginit](#tginit)
     - [tgfunctions](#tgfunctions)
+    - [tginit](#tginit)
+    - [tginit-uci-basic](#tginit-uci-basic)
+    - [tginstall](#tginstall)
+    - [tgsetup](#tgsetup)
+    - [tguninstall](#tguninstall)
+    - [tgupgrade](#tgupgrade)
     - [torguard's wireguard api v1](#torguards-wireguard-api-v1)
       - [API Expiration](#api-expiration)
       - [Validation loop script](#validation-loop-script)
@@ -50,16 +54,11 @@ curl -o /usr/bin/tgsetup https://raw.githubusercontent.com/TorGuard/openwrt-scri
 
 ## Script descriptions
 
-### tginstall
+### tgfunctions
 
-- [default path](usr/bin/tginstall): `/usr/bin/tginstall`
+All function of all scripts are currently in file /use/bin/tgfunctions.
 
-helper script for tginit. You can pass only 2 variables:
-
-- (1) openwrt interface name, default is wg and will be used if no vars are passed
-- (2) interface number, default is 0. Currently, _please make sure that there is no interface of same name before usage_
-
-all other values are retrieved from [/etc/config/torguard](etc/config/torguard).
+- [default path](usr/bin/tgfunctions): `/usr/bin/tgfunctions`
 
 ### tginit
 
@@ -68,11 +67,40 @@ all other values are retrieved from [/etc/config/torguard](etc/config/torguard).
 
 Torguard initialization script. Script generates new keypair and retrieves wireguard interface options from TorGuard server to which a user connects to with your torguard credentials, then it creates wireguard interface. After script finishes, please recheck your new interface if all values are there and if everything is ok, reboot your device.
 
-### tgfunctions
+### tginit-uci-basic
 
-All function of all scripts are currently in file /use/bin/tgfunctions.
+- [default path](usr/bin/tginit-uci-basic): `/usr/bin/tginit-uci-basic`
 
-- [default path](usr/bin/tgfunctions): `/usr/bin/tgfunctions`
+Script to initialize torguard config when none exists.
+
+### tginstall
+
+- [default path](usr/bin/tginstall): `/usr/bin/tginstall`
+
+main helper script for tginit. [9 variables can be passed](/usr/bin/tginstall), please check tginstall file for more info.
+
+- (1) openwrt interface name, default is wg and will be used if no vars are passed
+- (2) interface number, default is 0. Currently, _please make sure that there is no interface of same name before usage_
+
+all other values are retrieved from [/etc/config/torguard](etc/config/torguard).
+
+### tgsetup
+  
+[tgsetup](usr/bin/tginstall) _upgrades/downloads all required scripts as well as it creates new torguard config from scratch. Old is renamed/backed up to `/etc/config/torguard.old`_
+
+- [default path](usr/bin/tgsetup): `/usr/bin/tgsetup`
+
+### tguninstall
+
+- [default path](usr/bin/tguninstall): `/usr/bin/tguninstall`
+
+Script to remove all tg bins and rename configs with suffix `.old`
+
+### tgupgrade
+
+- [default path](usr/bin/tgupgrade): `/usr/bin/tgupgrade`
+
+Only upgrades bins, configs are not enabled, if you want to update configs too, then use please [tgsetup](#tgsetup).
 
 ### torguard's wireguard api v1
 
