@@ -28,11 +28,12 @@ DEPSASKINSTALL=""
 globalVars
 if  [[ $ENABLELOGGING == 1 ]]; then 
   # logInitVars && logCleanupOldLogFolder && initLogFiles && 
-  echo "logCleanupOldLogFolder" &&  logCleanupOldLogFolder | tee -a ${LOGFILEDIR}/${LOGFILE}/${LOGFILE}.${LOGEXT}
+  echo "logCleanupOldLogFolder"
+  logCleanupOldLogFolder | tee -a ${LOGFILEDIR}/${LOGFILE}/${LOGFILE}.${LOGEXT}
   echo "initLogFiles" | tee -a ${LOGFILEDIR}/${LOGFILE}/${LOGFILE}.${LOGEXT}
   initLogFiles | tee -a ${LOGFILEDIR}/${LOGFILE}/${LOGFILE}.${LOGEXT}
 	tgInstallMainRun | tee -a ${LOGFILEDIR}/${LOGFILE}/${LOGFILE}.${LOGEXT}
 else
-  logCleanupOldLogFolder
+  initLogFiles
 	tgInstallMainRun
 fi

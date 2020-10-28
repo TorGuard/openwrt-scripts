@@ -625,39 +625,28 @@ Do you want to set custom IP (y/n)? " askserv
   read -p "Do you want upgrade dependencies on every run (y/n)? " askupgrade;
   case "$askupgrade" in 
     y|Y ) uci set torguard.@wireguard_${TGIF}[0].upgrade="1";uci commit torguard;;
-    n|N ) echo "disabling upgrade on every run...";uci set torguard.@wireguard_${TGIF}[0].upgrade="0";;
+    n|N ) uci set torguard.@wireguard_${TGIF}[0].upgrade="0";;
     * ) echo "${INVALIDCHOICEMSG1}"; exit;;
   esac
   read -p "Do you want to install/reinstall required dependencies (y/n)? " askinstalldependencies
   case "$askinstalldependencies" in 
     y|Y ) opkg update && opkg install ${DEPSFIRSTINSTALL};;
-  #  n|N ) echo "WARNING: skipping installation of required packages, script will continue but will end in errors";;
+    n|N ) DUMMY="";;# "WARNING: skipping installation of required packages, script will continue but will end in errors";;
     * ) echo "${INVALIDCHOICEMSG1}"; exit;;
   esac
   read -p "${APIFIXMSG1}
 
 Do you want to use API fix for connection expiration (y/n)? " askapifix
   case "$askapifix" in 
-    y|Y ) uci set torguard.@wireguard_${TGIF}[0].apifix='1';
-          uci commit torguard;
-          read -p "Do you want to change default 60 seconds timeout for API fix (not recommended) (y/n)? " askapifixtimeout;;
-    n|N ) askapifixtimeout="$askapifix";echo "apifix API fix: disabled";echo "apifixtimeout: API fix timeout not required because it is disabled" ;;
+    y|Y ) uci set torguard.@wireguard_${TGIF}[0].apifix='1';uci commit torguard;;
+    n|N ) uci set torguard.@wireguard_${TGIF}[0].apifix='0';uci commit torguard;;
     * ) echo "${INVALIDCHOICEMSG1}"; exit ;;
   esac
-  case "$askapifixtimeout" in 
-    y|Y ) read -p "${APIFIXTIMEOUTMSG1}
+  read -p "${APIFIXTIMEOUTMSG1}
+Default apifixtimeout: 1m
 
-Set apifixtimeout: " setapifixtimeout;
-          uci set torguard.@wireguard_${TGIF}[0].apifixtimeout="${setapifixtimeout}";uci commit torguard;
-          ;;
-    n|N ) setapifixtimeout="60";echo "apifixtimeout: API fix timeout not required because it is disabled";;
-    * ) echo "${INVALIDCHOICEMSG1}"; exit;;
-  esac
-  case "$setapifixtimeout" in 
-    y|Y ) uci set torguard.@wireguard_${TGIF}[0].apifixtimeout="${setapifixtimeout}";uci commit torguard;;
-    n|N ) uci set torguard.@wireguard_${TGIF}[0].apifixtimeout="60";uci commit torguard;;
-    * ) echo "${INVALIDCHOICEMSG1}"; exit;;
-  esac
+Please set apifixtimeout: " setapifixtimeout;
+uci set torguard.@wireguard_${TGIF}[0].apifixtimeout="${setapifixtimeout}";uci commit torguard
 }
 
 tgInitUciBasic () {
@@ -842,7 +831,7 @@ globalVars () {
     ENABLELOGGING=1 		# 1 for yes, anything else means no
     BINSOUTDIR="/usr/bin"
     CONFSOUTDIR="/etc/config"
-    BINS="tgfunctions tginit tginit-uci-basic tginstall tguninstall tgupgrade speedperf"
+    BINS="tgfunctions tginit tginit-uci-basic tginstall tguninstall tgsetup tgupgrade speedperf"
     CONFS="speedperf"  # "torguard speedperf"
     TGAPIBIN="/etc/init.d/tgapi"
   fi

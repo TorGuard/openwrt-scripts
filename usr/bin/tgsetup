@@ -55,7 +55,7 @@ setDbin () {
 
 setDbin
 BINSOUTDIR="/usr/bin"
-BINS="tgfunctions tginit tginit-uci-basic tginstall tguninstall tgupgrade speedperf tgsetup"
+BINS="tgfunctions tginit tginit-uci-basic tginstall tguninstall tgsetup tgupgrade speedperf"
 
 if [ -f /etc/config/torguard ]; then
 	mv -f /etc/config/torguard /etc/config/torguard.old
