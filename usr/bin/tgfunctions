@@ -336,8 +336,9 @@ downloadinfo () {
 
 # get connection information from torguard server and set variables
 gettginfo () {
+  # ${VPNUSERNAME}" "${VPNPASS}" "${ENDPOINT}" "${ENDPOINTPORT}" "${APIPUBKEY} ${TGAPITEST}" "${TGAPIBIN}" "${LOOPWAITTIME}
 	downloadinfo "${1}" "${2}" "${3}" "${4}" "${5}"
-	createapidemoscript "${1}" "${2}" "${3}" "${4}" "${5}" "${TGAPITEST}" "${SERVICEFILE}" "${LOOPWAITTIME}"
+	createapidemoscript "${1}" "${2}" "${3}" "${4}" "${5}" "${6}" "${7}" "${8}"
 }
 
 # Delete wireguard interface
@@ -401,7 +402,7 @@ tginitAddWgInterface () {
 		echo "create new private and public keys..." && genwgkey
 	fi
 	echo "USED PUBLIC AND API KEYS:" && echo "Private: ${PRIVATE}" && echo "Public:  ${PUBLIC}" && echo "API Public key:${APIPUBKEY}"
-	gettginfo "${VPNUSERNAME}" "${VPNPASS}" "${ENDPOINT}" "${ENDPOINTPORT}" "${APIPUBKEY}"
+	gettginfo "${VPNUSERNAME}" "${VPNPASS}" "${ENDPOINT}" "${ENDPOINTPORT}" "${APIPUBKEY}" "${TGAPITEST}" "${TGAPIBIN}" "${LOOPWAITTIME}"
 	WGPUBLIC=$(echo ${TGINFO} | awk -F'[,]' '{print $1}' | awk -F'[:]' '{print $2}' | sed 's/"//g') && echo "Public key: ${WGPUBLIC}"
 	SERVERIP=$(echo ${TGINFO} | awk -F'[,]' '{print $2}' | awk -F'[:]' '{print $2}' | sed 's/"//g') && echo "Peer server: ${SERVERIP}"
 	CLIENTIP=$(echo ${TGINFO} | awk -F'[,]' '{print $3}' | awk -F'[:]' '{print $2}' | sed 's/"//g') && echo "IP Addresses: ${CLIENTIP}"
@@ -526,7 +527,7 @@ setTginitMsgs () {
   TorGuard wireguard private key:			  ${TGPRIVKEY}
   API Fix                               ${TGAPITEST}
   API Fix timeout                       ${LOOPWAITTIME}
-  Sevice file path                      ${SERVICEFILE}
+  Sevice file path                      ${TGAPIBIN}
   TorGuard Server List:					        ${TGSERVERLIST}
 ---"
   INFOEXAMPLESINGLEIPMSG1='Example single ip usage:
@@ -936,7 +937,7 @@ tgInstallMainRun () {
   case "$answer" in 
     y|Y ) echo "starting $0...";
           #opkg update && opkg install ${DEPS} ${DEPSOPTIONAL};
-          tginit "${TGUSER}" "${TGPASS}" "${WGINTERFACE}" "${WGIFNR}" "${NOHOSTROUTE}" "${LISTENPORT}" "${MTU}" "${FWMARK}" "${KEEPALIVE}" "${DELEGATE}" "${ROUTEALLOWEDIPS}" "${FIREWALLZONE}" "${WGPRIVKEY}" "${BINSOUTDIR}/tgapitest" "${SERVICEFILE}" "${WGAPIFIXTIMEOUT}" "${ENDPOINT}:${ENPOINTPORT}";;
+          tginit "${TGUSER}" "${TGPASS}" "${WGINTERFACE}" "${WGIFNR}" "${NOHOSTROUTE}" "${LISTENPORT}" "${MTU}" "${FWMARK}" "${KEEPALIVE}" "${DELEGATE}" "${ROUTEALLOWEDIPS}" "${FIREWALLZONE}" "${WGPRIVKEY}" "${BINSOUTDIR}/tgapitest" "${TGAPIBIN}" "${WGAPIFIXTIMEOUT}" "${ENDPOINT}:${ENPOINTPORT}";;
     n|N ) echo "user abort, script finished"; exit;;
     * ) echo "${INVALIDCHOICEMSG1}"; exit;;
   esac
