@@ -6,7 +6,6 @@ restartNetwork () {
 }
 
 preinitchecks () {
-
   SETTINGSMSG1="### SETTINGS ###
 Unattended install:             ${question}
 Install speedperf:              ${setspeedperf}
@@ -66,7 +65,10 @@ Do you want continue (y/n)? " answer;
 
 postinitchecks () {
 case "$setspeedperf" in 
-  y|Y ) echo "install speedperf: yes";opkg update && opkg install ${DEPSSPEEDPERF};${DBIN} ${CONFSOUTDIR}/speedperf ${TGSCRIPTSURL2}/speedperf;${DBIN} ${BINSOUTDIR}/speedperf ${TGSCRIPTSURL1}/speedperf;chmod +x  ${BINSOUTDIR}/speedperf;;
+  y|Y ) echo "install speedperf: yes";
+        opkg update && opkg install ${DEPSSPEEDPERF};${DBIN} ${CONFSOUTDIR}/speedperf ${TGSCRIPTSURL2}/speedperf;
+        ${DBIN} ${BINSOUTDIR}/speedperf ${TGSCRIPTSURL1}/speedperf;
+        chmod +x  ${BINSOUTDIR}/speedperf;;
   n|N ) echo "install speedperf: no";;
   * ) echo "install speedperf: ${INVALIDCHOICEMSG1}"; exit;;
 esac
@@ -662,6 +664,7 @@ tgInitUciBasic () {
   uci set torguard.@torguard[-1].confsoutdir="${CONFSOUTDIR}"
   uci set torguard.@torguard[-1].bins="${BINS}"
   uci set torguard.@torguard[-1].configs="${CONFS}"
+  uci set torguard.@torguard[-1].tgapibin="${TGAPIBIN}"
   uci rename torguard.@torguard[-1]='setupconfig'
 
   uci add torguard torguard
@@ -825,16 +828,18 @@ tgInitUciConstants () {
 globalVars () {
   if [ -f /etc/config/torguard ]; then
     ENABLELOGGING=$(uci get torguard.setupconfig.enable_logging)
-    BINSOUTDIR=$(uci get torguard.setupconfig.binsoutdir)
-    CONFSOUTDIR=$(uci get torguard.setupconfig.confsoutdir)
-    BINS=$(uci get torguard.setupconfig.bins)
-    CONFS=$(uci get torguard.setupconfig.configs)
+    BINSOUTDIR="$(uci get torguard.setupconfig.binsoutdir)"
+    CONFSOUTDIR="$(uci get torguard.setupconfig.confsoutdir)"
+    BINS="$(uci get torguard.setupconfig.bins)"
+    CONFS="$(uci get torguard.setupconfig.configs)"
+    TGAPIBIN="$(uci get torguard.setupconfig.tgapibin)"
   else
     ENABLELOGGING=1 		# 1 for yes, anything else means no
     BINSOUTDIR="/usr/bin"
     CONFSOUTDIR="/etc/config"
     BINS="tgfunctions tginit tginit-uci-basic tginstall speedperf"
     CONFS="speedperf"  # "torguard speedperf"
+    TGAPIBIN="/etc/init.d/tgapi"
   fi
   logInitVars
   setDbin
