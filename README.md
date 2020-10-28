@@ -18,6 +18,7 @@
     - [tginit](#tginit)
     - [tginit-uci-basic](#tginit-uci-basic)
     - [tginstall](#tginstall)
+      - [tginstall vars](#tginstall-vars)
     - [tgsetup](#tgsetup)
     - [tguninstall](#tguninstall)
     - [tgupgrade](#tgupgrade)
@@ -76,8 +77,10 @@ Script to initialize torguard config when none exists.
 ### tginstall
 
 - [default path](usr/bin/tginstall): `/usr/bin/tginstall`
+- if /etc/config/torguard exists, script will be unattended.
+main helper script for tginit. [9 variables can be passed](/usr/bin/tginstall), please check [tginstall](/usr/bin/tginstall) file for more info.
 
-main helper script for tginit. [9 variables can be passed](/usr/bin/tginstall), please check tginstall file for more info.
+#### tginstall vars
 
 - (1) openwrt interface name, default is wg and will be used if no vars are passed
 - (2) interface number, default is 0. Currently, _please make sure that there is no interface of same name before usage_
