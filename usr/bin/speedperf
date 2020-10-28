@@ -66,7 +66,7 @@ MYOUTIP1="$(curl ifconfig.co)" && printf "Server public ip4 %s\n" $MYOUTIP1
 #MYOUTIP2="$(curl checkip.amazonaws.com)"
 #MYOUTIP3="$(curl ipecho.net/plain)"
 VERSION=$(date +%Y%m%d)-$(date +%s) && echo "VERSION: $VERSION"
-CONCURENT=$(uci get speedperf.default_client.concurent) && echo "CONCURENT: $CONCURENT"
+REPETITIONS=$(uci get speedperf.default_client.repetitions) && echo "REPETITIONS: $REPETITIONS"
 TCPPORT=$(uci get speedperf.default_client.tcp_port) && echo "TCPPORT: $TCPPORT"
 UDPPORT=$(uci get speedperf.default_client.udp_port) && echo "UDPPORT: $UDPPORT"
 V4=$(uci get speedperf.default_client.enable_ip4) && echo "V4: $V4"
@@ -75,7 +75,7 @@ NORMAL=$(uci get speedperf.default_client.normal) && echo "NORMAL: $NORMAL"
 REVERSE=$(uci get speedperf.default_client.reverse) && echo "REVERSE: $REVERSE"
 TCPTEST=$(uci get speedperf.default_client.tcptest) && echo "TCPTEST: $TCPTEST"
 UDPTEST=$(uci get speedperf.default_client.udptest) && echo "UDPTEST: $UDPTEST"
-STORAGE=$(uci get speedperf.default_client.storage) && echo "STORAGE: $STORAGE"
+STORAGE=$(uci get speedperf.default_client.storage) && echo "STORAGE: ${STORAGE}"
 TCPPARALLEL=$(uci get speedperf.default_client.parallel_tcp) && echo "TCPPARALLEL: $TCPPARALLEL"
 UDPPARALLEL=$(uci get speedperf.default_client.parallel_udp) && echo "UDPPARALLEL: $UDPPARALLEL"
 LOGDIR="$(uci get speedperf.default_client.logdir)" && echo "LOGDIR: $LOGDIR"
@@ -86,7 +86,7 @@ COMPRESS_FOLDER=$(uci get speedperf.default_client.compress_folder) && echo "COM
 SERVER=$(uci get speedperf.default_client.server) && echo "SERVER: $SERVER" && GEOINFO="$(curl https://ipinfo.io/${MYOUTIP1})" # && echo "GEOINFO: $GEOINFO"
 
 case "${V4}-${V6}" in
-   "1-1") echo "IPv4 and IPv6 enabled";IPV46="4";IPV46="$IPV46 6";;
+   "1-1") echo "IPv4 and IPv6 enabled";IPV46="4";IPV46="${IPV46} 6";;
    "1-0") echo "IPv4 enabled, IPv6 disabled";IPV46="4";;
    "0-1") echo "IPv4 disabled, IPv6 enabled";IPV46="6";;
    *)  echo "IPv4 and IPv6 disabled";IPV46="";break;;
@@ -101,8 +101,8 @@ else
 fi
 
 mkdir -p "${STORAGE}"
-if [ -d "$STORAGE" ]; then
-    echo "Storage folder: found ($STORAGE)"
+if [ -d "${STORAGE}" ]; then
+    echo "Storage folder: found (${STORAGE})"
 else
     echo "Storage folder: not found, will not be used"
     STORAGE=0
@@ -112,7 +112,7 @@ cd "$LOGDIR"
 
 TESTADDITIONALINFO="" && SUFFIXEXT="txt" && SUFFIXINF="ping_nslookup_traceroute_info"
 C=0
-while [ $CONCURENT -gt 1 ]; do
+while [ $REPETITIONS -gt 1 ]; do
     C=$(( $C + 1 ))
     for v in ${IPV46}; do
         if [ $TCPTEST = 1 ]; then
@@ -123,11 +123,13 @@ while [ $CONCURENT -gt 1 ]; do
                     TESTADDITIONALINFO=$(printinfo "${v}" "${SERVER}" "${t}" "${PROTO}" "${TCPPARALLEL}" "no" "${L}" | tee -a "${LOG}/${C}_${PROTO}${t}_${SUFFIXINF}.${SUFFIXEXT}")
                     PRINTIPINFO=$(printipinfo "${v}" "${SERVER}" | tee -a "${LOG}/${C}_${PROTO}${t}_${SUFFIXINF}.${SUFFIXEXT}")
                     runiperf "${SERVER}" "${t}" "${TCPPARALLEL}" "${v}" "${L}" ""
-                    if [ $COMPRESS_SINGLE = 1 ]; then echo "Compress file: ${L}" && gzipfile "${LOG}" "${C}_${PROTO}${t}.${LOGEXT}" && gzipfile "${LOG}" "${C}_${PROTO}${t}_${SUFFIXINF}.${SUFFIXEXT}"; fi
-                    if [ $STORAGE = 0 ]; then
+                    if [ $COMPRESS_SINGLE = 1 ]; then
+                        echo "Compress file: ${L}" && gzipfile "${LOG}" "${C}_${PROTO}${t}.${LOGEXT}" && gzipfile "${LOG}" "${C}_${PROTO}${t}_${SUFFIXINF}.${SUFFIXEXT}"
+                    fi
+                    if [ ${STORAGE} = 0 ]; then
                         echo "Storage disabling, skipping moving files to storage"
                     else
-                        mkdir -p $STORAGE/${LOGFILE}_${VERSION}_${SERVER} && mv ${LOG}/${C}_${PROTO}${t}* $STORAGE/${LOGFILE}_${VERSION}_${SERVER}/
+                        mkdir -p ${STORAGE}/${LOGFILE}_${VERSION}_${SERVER} && mv ${LOG}/${C}_${PROTO}${t}* ${STORAGE}/${LOGFILE}_${VERSION}_${SERVER}/
                     fi
                 done
             fi
@@ -138,11 +140,13 @@ while [ $CONCURENT -gt 1 ]; do
                     PRINTIPINFO=$(printipinfo "${v}" "${SERVER}" | tee -a "${C}_${PROTO}${t}_${SUFFIXINF}_reverse.${SUFFIXEXT}")
                     #printinfo "${v}" "${SERVER}" "${t}" "${PROTO}" "${TCPPARALLEL}" "yes" "${L}"
                     runiperf "${SERVER}" "${t}" "${TCPPARALLEL}" "${v}" "${L}" "-R"
-                    if [ $COMPRESS_SINGLE = 1 ]; then echo "Compress file: ${L}" && gzipfile "${LOG}" "${C}_${PROTO}${t}_reverse.${LOGEXT}" && gzipfile "${LOG}" "${C}_${PROTO}${t}_${SUFFIXINF}_reverse.${SUFFIXEXT}"; fi
-                    if [ $STORAGE = 0 ]; then
+                    if [ $COMPRESS_SINGLE = 1 ]; then
+                        echo "Compress file: ${L}" && gzipfile "${LOG}" "${C}_${PROTO}${t}_reverse.${LOGEXT}" && gzipfile "${LOG}" "${C}_${PROTO}${t}_${SUFFIXINF}_reverse.${SUFFIXEXT}"
+                    fi
+                    if [ ${STORAGE} = 0 ]; then
                         echo "Storage disabling, skipping moving files there"
                     else
-                        mkdir -p $STORAGE/${LOGFILE}_${VERSION}_${SERVER} && mv ${LOG}/${C}_${PROTO}${t}* $STORAGE/${LOGFILE}_${VERSION}_${SERVER}/
+                        mkdir -p ${STORAGE}/${LOGFILE}_${VERSION}_${SERVER} && mv ${LOG}/${C}_${PROTO}${t}* ${STORAGE}/${LOGFILE}_${VERSION}_${SERVER}/
                     fi
                 done
             fi
@@ -156,11 +160,13 @@ while [ $CONCURENT -gt 1 ]; do
                     PRINTIPINFO=$(printipinfo "${v}" "${SERVER}" | tee -a "${LOG}/${C}_${PROTO}${t}_${SUFFIXINF}.${SUFFIXEXT}")
                     #printinfo "${v}" "${SERVER}" "${t}" "${PROTO}" "${UDPPARALLEL}" "no" "${L}"
                     runiperf "${SERVER}" "${t}" "${TCPPARALLEL}" "${v}" "${L}" ""
-                    if [ $COMPRESS_SINGLE = 1 ]; then echo "Compress file: ${L}" && gzipfile "${LOG}" "${C}_${PROTO}${t}.${LOGEXT}" && gzipfile "${LOG}" "${C}_${PROTO}${t}_${SUFFIXINF}.${SUFFIXEXT}"; fi
-                    if [ $STORAGE = 0 ]; then
+                    if [ $COMPRESS_SINGLE = 1 ]; then
+                        echo "Compress file: ${L}" && gzipfile "${LOG}" "${C}_${PROTO}${t}.${LOGEXT}" && gzipfile "${LOG}" "${C}_${PROTO}${t}_${SUFFIXINF}.${SUFFIXEXT}"
+                    fi
+                    if [ ${STORAGE} = 0 ]; then
                         echo "Storage disabling, skipping moving files there"
                     else
-                        mkdir -p $STORAGE/${LOGFILE}_${VERSION}_${SERVER} && mv ${LOG}/${C}_${PROTO}${t}* $STORAGE/${LOGFILE}_${VERSION}_${SERVER}/
+                        mkdir -p ${STORAGE}/${LOGFILE}_${VERSION}_${SERVER} && mv ${LOG}/${C}_${PROTO}${t}* ${STORAGE}/${LOGFILE}_${VERSION}_${SERVER}/
                     fi
                 done
             fi
@@ -171,29 +177,45 @@ while [ $CONCURENT -gt 1 ]; do
                     PRINTIPINFO=$(printipinfo "${v}" "${SERVER}" | tee -a "${C}_${PROTO}${t}_${SUFFIXINF}_reverse.${SUFFIXEXT}")
                     #printinfo "${v}" "${SERVER}" "${t}" "${PROTO}" "${UDPPARALLEL}" "yes" "${L}"
                     runiperf "${SERVER}" "${t}" "${TCPPARALLEL}" "${v}" "${L}" "-R"
-                    if [ $COMPRESS_SINGLE = 1 ]; then echo "Compress file: ${L}" && gzipfile "${LOG}" "${C}_${PROTO}${t}_reverse.${LOGEXT}" && gzipfile "${LOG}" "${C}_${PROTO}${t}_${SUFFIXINF}_reverse.${SUFFIXEXT}"; fi
-                    if [ $STORAGE = 0 ]; then
+                    if [ $COMPRESS_SINGLE = 1 ]; then
+                        echo "Compress file: ${L}" && gzipfile "${LOG}" "${C}_${PROTO}${t}_reverse.${LOGEXT}" && gzipfile "${LOG}" "${C}_${PROTO}${t}_${SUFFIXINF}_reverse.${SUFFIXEXT}"
+                    fi
+                    if [ ${STORAGE} = 0 ]; then
                         echo "Storage disabling, skipping moving files there"
                     else
-                        mkdir -p "${STORAGE}/${LOGFILE}_${VERSION}_${SERVER}" && mv "${LOG}/${C}_${PROTO}${t}*" "${STORAGE}/${LOGFILE}_${VERSION}_${SERVER}/"
+                        mkdir -p ${STORAGE}/${LOGFILE}_${VERSION}_${SERVER} && mv ${LOG}/${C}_${PROTO}${t}* ${STORAGE}/${LOGFILE}_${VERSION}_${SERVER}/
                     fi
                 done
             fi
         fi
     done
-    CONCURENT=$(( $CONCURENT - 1 ))
+    REPETITIONS=$(( $REPETITIONS - 1 ))
 done
 
 if [ $COMPRESS_FOLDER = 1 ]; then
-        if [ -d "$STORAGE" ]; then
-            echo "Compress folder: ${STORAGE}/${LOGFILE}_${VERSION}_${SERVER}" && gzipfolder "${STORAGE}" "${LOGFILE}_${VERSION}_${SERVER}"
-        else
-            echo "Compress folder: ${LOGDIR}/${LOGFILE}_${VERSION}_${SERVER}" && gzipfolder "${LOGDIR}" "${LOGFILE}_${VERSION}_${SERVER}"
+    if [ -d "${STORAGE}" ]; then
+        if [ -d ${LOGDIR}/${LOGFILE}_${VERSION}_${SERVER} ]; then
+            mv -f ${LOGDIR}/${LOGFILE}_${VERSION}_${SERVER}/* ${STORAGE}/${LOGFILE}_${VERSION}_${SERVER}/
+            rm -fR ${LOGDIR}/${LOGFILE}_${VERSION}_${SERVER}
         fi
+        echo "Compress folder: ${STORAGE}/${LOGFILE}_${VERSION}_${SERVER}" && gzipfolder "${STORAGE}" "${LOGFILE}_${VERSION}_${SERVER}"
+    else
+        if [ -d "${LOGDIR}/${LOGFILE}_${VERSION}_${SERVER}" ]; then
+            echo "Compress folder: ${LOGDIR}/${LOGFILE}_${VERSION}_${SERVER}" && gzipfolder "${LOGDIR}" "${LOGFILE}_${VERSION}_${SERVER}"
+            rm -fR ${LOGDIR}/${LOGFILE}_${VERSION}_${SERVER}
+        fi
+    fi
 fi
-#echo "cleanup"
-#if [ -d "$STORAGE" ]; then
-#    mkdir -p $STORAGE/
-#    cp -fR ${LOGDIR}/${LOGFILE}_*_${SERVER}* $STORAGE/ && rm -fR $LOGDIR/*
+
+echo "cleanup"
+#if [ -f "${STORAGE}/${LOGFILE}_${VERSION}_${SERVER}.tar.gz" ]; then
+#    mv -f ${STORAGE}/${LOGFILE}_${VERSION}_${SERVER}.tar.gz ${LOGDIR}/${LOGFILE}_${VERSION}_${SERVER}.tar.gz
 #fi
+if [ -d "${STORAGE}" ]; then
+    rm -fR ${STORAGE}/${LOGFILE}_${VERSION}_${SERVER}
+fi
+if [ -d "${LOGDIR}/${LOGFILE}_${VERSION}_${SERVER}" ]; then
+    rm -fR ${LOGDIR}/${LOGFILE}_${VERSION}_${SERVER}
+fi
+
 echo "finished"
