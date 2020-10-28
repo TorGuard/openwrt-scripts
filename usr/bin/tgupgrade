@@ -5,7 +5,7 @@ source tgfunctions
 LOGFILE="tgupgrade"
 ENABLELOGGING=0
 UPGRADESCRIPTS=1		# 1 - keeps scripts on uninstall
-UPGRADECONFIGS=1			# 1 - renames ${CONFSOUTDIR}/torguard to ${CONFSOUTDIR}/torguard.bkp and creates/downloads latest
+UPGRADECONFIGS=0			# 1 - renames ${CONFSOUTDIR}/torguard to ${CONFSOUTDIR}/torguard.bkp and creates/downloads latest
 if  [[ ${ENABLELOGGING} == 1 ]]; then 
 	# logInitVars && logCleanupOldLogFolder && initLogFiles && 
 	logInitVars && initLogFiles
