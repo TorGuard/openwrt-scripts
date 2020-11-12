@@ -645,7 +645,11 @@ Do you want to set custom IP (y/n)? " askserv
           uci set torguard.@wireguard_${TGIF}[0].endpoint_host="$setserv";
           read -p 'Set your wireguard private key: ' TORGUARDAPIPRIVKEY;
           uci set torguard.@wireguard_${TGIF}[0].tgprivkey="${TORGUARDAPIPRIVKEY}";
-          uci set torguard.@wireguard_${TGIF}[0].wgapipubkey="$(echo "${TORGUARDAPIPRIVKEY}" | wg pubkey | sed 's/=/%3D/')";
+          uci set torguard.@wireguard_${TGIF}[0].tgpubkey="$(echo "${TORGUARDAPIPRIVKEY}" | wg pubkey)";
+          tgpubkey=$(echo "${TORGUARDAPIPRIVKEY}" | wg pubkey)
+          urlencode "${tgpubkey}"
+          wgapipubkey="${CTXT}" && CTXT=''
+          uci set torguard.@wireguard_${TGIF}[0].wgapipubkey="${wgapipubkey}";
           uci commit torguard;;
     n|N ) echo "using default script server";;
     * ) echo "${INVALIDCHOICEMSG1}"; exit;;
