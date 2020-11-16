@@ -5,6 +5,30 @@ restartNetwork () {
   /etc/init.d/network restart
 }
 
+urlencode () {
+  # https://secure.n-able.com/webhelp/NC_9-1-0_SO_en/Content/SA_docs/API_Level_Integration/API_Integration_URLEncoding.html
+  # URL Encoding of Special Characters
+  CH1="$ / \ ^ [ ] ="
+  CH2='| ~ & + , : ; ? @ ` " < > # { }'
+  CH3="{ }"
+  echo 'urlencode - replace % with 25'
+  CTXT=$(echo "${1}" | sed 's/%/%25/g') && echo ${CTXT}
+  echo 'urlencode - replace spaces with %20'
+  CTXT=$(echo "${CTXT}" | sed 's/ /%20/g') && echo ${CTXT}
+  for i in ${CH1}; do
+    CHEX=$(echo -n "${i}" | od -A n -t x1 | sed 's/ //g')
+    echo "urlencode - replace ${i} with ${CHEX}"
+    CTXT=$(echo "${CTXT}" | sed 's/\'${i}'/%${CHEX}/g')
+  done
+  for i in ${CH2}; do
+    CHEX=$(echo -n "${i}" | od -A n -t x1 | sed 's/ //g')
+    echo "urlencode - replace ${i} with ${CHEX}"
+    CTXT=$(echo "${CTXT}" | sed "s/${i}/%${CHEX}/g")
+  done
+  echo "urlencode input:  ${1}"
+  echo "urlencode output: ${CTXT}"
+}
+
 preinitchecks () {
   SETTINGSMSG1="### SETTINGS ###
 Unattended install:             ${question}
@@ -239,7 +263,7 @@ APIFIXMSG1="---
 ---"
 }
 
-# TGINIT Funcions
+# TGINIT Functions
 getmyipTorGuard () {
 	URL="https://updates.torguard.biz/cgi-bin/whatismyip.pl"
 	MYIPADDRESS=$(${DBINAPI} ${URL})
@@ -247,7 +271,10 @@ getmyipTorGuard () {
 
 # Wireguarrd key generation
 apiformatpubkey () {
-	APIPUBKEY=$(echo "${PUBLIC}" | sed 's/=/%3D/') && echo "apiformatpubkey... formating api public key ... OK: ${APIPUBKEY}"
+	#APIPUBKEY=$(echo "${PUBLIC}" | sed 's/=/%3D/') && echo "apiformatpubkey... formating api public key ... OK: ${APIPUBKEY}"
+  urlencode "${PUBLIC}"
+  APIPUBKEY="${CTXT}" && echo "APIPUBKEY: ${APIPUBKEY}" && CTXT=''
+  # clear ctxt var
 }
 
 createwgpubkey () {
@@ -618,7 +645,11 @@ Do you want to set custom IP (y/n)? " askserv
           uci set torguard.@wireguard_${TGIF}[0].endpoint_host="$setserv";
           read -p 'Set your wireguard private key: ' TORGUARDAPIPRIVKEY;
           uci set torguard.@wireguard_${TGIF}[0].tgprivkey="${TORGUARDAPIPRIVKEY}";
-          uci set torguard.@wireguard_${TGIF}[0].wgapipubkey="$(echo "${TORGUARDAPIPRIVKEY}" | wg pubkey | sed 's/=/%3D/')";
+          uci set torguard.@wireguard_${TGIF}[0].tgpubkey="$(echo "${TORGUARDAPIPRIVKEY}" | wg pubkey)";
+          tgpubkey=$(echo "${TORGUARDAPIPRIVKEY}" | wg pubkey)
+          urlencode "${tgpubkey}"
+          wgapipubkey="${CTXT}" && CTXT=''
+          uci set torguard.@wireguard_${TGIF}[0].wgapipubkey="${wgapipubkey}";
           uci commit torguard;;
     n|N ) echo "using default script server";;
     * ) echo "${INVALIDCHOICEMSG1}"; exit;;

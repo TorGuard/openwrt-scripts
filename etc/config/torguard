@@ -33,6 +33,7 @@ config wireguard_tg0
 	option route_allowed_ips '1'
 	option upgrade '0'
 	option tgprivkey ''
+	option tgpubkey ''
 	option wgapipubkey ''
 	option apifix '1'
 	option apifixtimeout '60'
