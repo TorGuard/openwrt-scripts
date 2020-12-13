@@ -11,7 +11,8 @@
 
 - [TorGuard related OpenWRT scripts](#torguard-related-openwrt-scripts)
   - [TorGuard Wireguard Installation](#torguard-wireguard-installation)
-    - [download and install with wget](#download-and-install-with-wget)
+    - [download and install with wget or curl](#download-and-install-with-wget-or-curl)
+      - [download and install with wget](#download-and-install-with-wget)
     - [download and install with curl](#download-and-install-with-curl)
   - [Script descriptions](#script-descriptions)
     - [tgfunctions](#tgfunctions)
@@ -40,10 +41,13 @@
 
 Installation can be performed by running [/usr/bin/tginstall](usr/bin/tginstall):
 
-### download and install with wget
+### download and install with wget or curl
+
+Copy and paste from codeboxes below using either wget or curl.
+
+#### download and install with wget
 
 ```shell
-# first download functions script
 wget -O /usr/bin/tgsetup https://raw.githubusercontent.com/TorGuard/openwrt-scripts/master/usr/bin/tgsetup && chmod +x /usr/bin/tgsetup && /usr/bin/tgsetup
 ```
 
@@ -178,7 +182,9 @@ first you need to convert your WG public key into API used formatting
 
 ##### Convert your public key to API format
 
-replacing suffix `=` with `%3D`
+Scripts encode url with function [urlencode](https://github.com/TorGuard/openwrt-scripts/blob/a09240d8761dbbe4072fbae6761e69373ed4c2b9/usr/bin/tgfunctions#L8) replacing %, space and [other special characters](https://github.com/TorGuard/openwrt-scripts/blob/a09240d8761dbbe4072fbae6761e69373ed4c2b9/usr/bin/tgfunctions#L11-L13).
+
+Example with replacing only suffix `=` with `%3D`
 
 - Example:
   `AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJLLL=`
