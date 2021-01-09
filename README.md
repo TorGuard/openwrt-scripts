@@ -1,9 +1,7 @@
 
 ---
 
-<a href="https://github.com/TorGuard/openwrt-scripts/wiki#faq-frequently-asked-questions"><img src="https://raw.githubusercontent.com/wiki/TorGuard/openwrt-scripts/assets/images/faq.png" width="50"></a>
-<a href="https://torguard.net/"><img src="https://raw.githubusercontent.com/wiki/TorGuard/openwrt-scripts/assets/images/torguard-logo.png" width="200"></a>
-<a href="https://github.com/openwrt/openwrt"><img src="https://raw.githubusercontent.com/openwrt/openwrt/master/include/logo.png" width="200"></a>
+<a href="https://github.com/openwrt/openwrt"><img src="https://raw.githubusercontent.com/wiki/TorGuard/openwrt-scripts/assets/images/openwrt/logo.png" height="50"></a> <a href="https://github.com/TorGuard/openwrt-scripts/wiki#faq-frequently-asked-questions"><img src="https://raw.githubusercontent.com/wiki/TorGuard/openwrt-scripts/assets/images/misc/faq.png" height="50"></a> <a href="https://torguard.net/"><img src="https://raw.githubusercontent.com/wiki/TorGuard/openwrt-scripts/assets/images/torguard/logo.png" height="50"></a>
 
 ---
 
