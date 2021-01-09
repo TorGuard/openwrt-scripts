@@ -233,13 +233,13 @@ TorGuard API works for now with raw public keys, but to make it correct, public 
 
 *Current implementation of urlencode in script is a little buggy and is disabled by default*. Script uses currently public key for api calls which works with current api. You can manually convert with [this tool](https://convertstring.com/EncodeDecode/UrlEncode) (or any other) and save your api public key with:
 
-```bash
+```shell
 uci set torguard.@wireguard_tg0[0].wgapipubkey='AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJLLL%3D'
 ```
 
 to show your currently set api key, use, run
 
-```bash
+```shell
 uci get torguard.@wireguard_tg0[0].wgapipubkey
 ```
 
