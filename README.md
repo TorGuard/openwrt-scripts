@@ -3,7 +3,7 @@
 
 <a href="https://github.com/TorGuard/openwrt-scripts/wiki#faq-frequently-asked-questions"><img src="https://raw.githubusercontent.com/wiki/TorGuard/openwrt-scripts/assets/images/faq.png" width="50"></a>
 <a href="https://torguard.net/"><img src="https://raw.githubusercontent.com/wiki/TorGuard/openwrt-scripts/assets/images/torguard-logo.png" width="200"></a>
-<a href="https://github.com/openwrt/openwrt"><img src="https://raw.githubusercontent.com/openwrt/openwrt/master/logo.svg" width="200"></a>
+<a href="https://github.com/openwrt/openwrt"><img src="https://raw.githubusercontent.com/openwrt/openwrt/master/include/logo.png" width="200"></a>
 
 ---
 
@@ -57,7 +57,7 @@ curl -o /usr/bin/tgsetup https://raw.githubusercontent.com/TorGuard/openwrt-scri
 
 ### tgfunctions
 
-All function of all scripts are currently in file /use/bin/tgfunctions.
+All function of all scripts are currently in file /usr/bin/tgfunctions.
 
 - [default path](usr/bin/tgfunctions): `/usr/bin/tgfunctions`
 
@@ -126,12 +126,12 @@ Public key for API usage has to be converted first into appropriate format by re
 - Usage:
 
   ```log
-  https://[USER]:[PASS]@[SERVER]:[PORT]/api/v1/setup?public-key=[YOURPUBLICKEY]`
+  https://[USER]:[PASS]@[SERVER]:[PORT]/api/v1/setup?public-key=[YOURPUBLICKEY]
   ```
 
 #### API Expiration
 
-Currently every connection will work for 15 minutes, no disconnect will happen, but after 15 minutes your client will lose ability to connect to the internet. To prevent this, one could either run a cronjob or start a service tgapi which runs by default every 5 minutes ensuring that the config is extended for 15 minutes from the timestamp API call is executed.
+Currently every connection will work for 12 hours, no disconnect will happen, but after 12 hours your client will lose ability to connect to the internet. To prevent this, one could either run a cronjob or start a service tgapi which runs by default every 5 minutes ensuring that the config is extended for 12 hours from the timestamp API call is executed.
 
 - _This does not restrict a user, to run same job/endless loop/... on any other PC as a backup to ensure that config used will never expire._
   _Good example is use with mobile phone where one would be very restricted in keeping connection valid without to lose it. If you use this service on a router and you have ability to run tgapi on some other device, this would ensure that your config never expires._
@@ -142,7 +142,7 @@ Currently every connection will work for 15 minutes, no disconnect will happen, 
 
 - default path:  `/usr/bin/tgapitest`
 
-This script extends/validates connection to keep your wg active. Current restriction set by TorGuard is 15 minutes, please check always directly on torguard homepage/forum for any changes on this.
+This script extends/validates connection to keep your wg active. Current restriction set by TorGuard is 12 hours, please check always directly on torguard homepage/forum for any changes on this.
 Script can run on every linux system.
 If it uses wget or curl depends only on tginstall/tginit process finding/using either curl or wget.
 
@@ -178,12 +178,24 @@ first you need to convert your WG public key into API used formatting
 
 ##### Convert your public key to API format
 
-replacing suffix `=` with `%3D`
+TorGuard API works for now with raw public keys, but to make it correct, public key has to to be converted into url format meaning that some signs have to be replaced, as example replacing suffix `=` with `%3D`
 
 - Example:
   `AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJLLL=`
   to
   `AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJLLL%3D`
+
+*Current implementation of urlencode in script is a little buggy and is disabled by default*. Script uses currently public key for api calls which works with current api. You can manually convert with [this tool](https://convertstring.com/EncodeDecode/UrlEncode) (or any other) and save your api public key with:
+
+```bash
+uci set torguard.@wireguard_tg0[0].wgapipubkey='AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJLLL%3D'
+```
+
+to show your currently set api key, use, run
+
+```bash
+uci get torguard.@wireguard_tg0[0].wgapipubkey
+```
 
 ##### Example API URL
 
