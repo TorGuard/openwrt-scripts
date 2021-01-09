@@ -24,6 +24,8 @@
       - [API Expiration](#api-expiration)
       - [Validation loop script](#validation-loop-script)
       - [tgapi service](#tgapi-service)
+        - [tgapi service script /etc/init.d/tgapi](#tgapi-service-script-etcinitdtgapi)
+          - [tgapitest](#tgapitest)
       - [Example for New York shared server](#example-for-new-york-shared-server)
         - [Convert your public key to API format](#convert-your-public-key-to-api-format)
         - [Example API URL](#example-api-url)
@@ -169,6 +171,52 @@ Demo service file which can be used instead of cronjob is created by tginit, it 
   3283 root      1256 S    /bin/sh /usr/bin/tgapitest
   3535 root      1248 S    grep tgapitest
   ```
+
+##### tgapi service script /etc/init.d/tgapi
+
+this script is auto created and you do not need to change it, this is only for the information about how service file looks like for user who might want to enable the same on other systems where scripts for openwrt would not work.
+
+```shell
+#!/bin/sh /etc/rc.common
+# Copyright (c) 2021 TorGuard forum user 19807409
+
+START=50
+STOP=50
+
+USE_PROCD=1
+
+reload_service() {
+        procd_send_signal /usr/bin/tgapitest
+}
+
+start_service() {
+        procd_open_instance
+        procd_set_param command /usr/bin/tgapitest
+        procd_set_param respawn
+        procd_close_instance
+}
+```
+
+API URL is configured in file `/usr/bin/tgapitest`.
+###### tgapitest
+
+Basic endless loop:
+
+```shell
+#!/bin/sh
+# Copyright (c) 2021 TorGuard forum user 19807409
+# endless loop running every 1 minutes (60 seconds)
+WAITTIME=60
+while true
+do
+        /usr/bin/curl --cacert /etc/torguard/ca.crt -k https://YOURUSERNAME:YOURPASS@TGSERVERIP:1443/api/v1/setup?public-key=AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJLLL%3D
+        sleep ${WAITTIME}
+done
+```
+
+`/usr/bin/tgapitest` is auto created and is overwritten with every tginstall run, there is no need for a user to make any changes on that file, here is example with dummy values, please use IP's instead of domains for torguard as domains might deliver you different servers where server's public keys would differ.
+
+_During tginit/tginstall, script checks if curl/wget exist as well if certificate exists making according steps/settings and creating this service file._
 
 #### Example for New York shared server
 
