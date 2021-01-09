@@ -1018,7 +1018,7 @@ tgInstallMainRun () {
   case "$answer" in 
     y|Y ) echo "starting $0...";
           #opkg update && opkg install ${DEPS} ${DEPSOPTIONAL};
-          tginit "${TGUSER}" "${TGPASS}" "${WGINTERFACE}" "${WGIFNR}" "${NOHOSTROUTE}" "${LISTENPORT}" "${MTU}" "${FWMARK}" "${KEEPALIVE}" "${DELEGATE}" "${ROUTEALLOWEDIPS}" "${FIREWALLZONE}" "${WGPRIVKEY}" "${BINSOUTDIR}/tgapitest" "${TGAPIBIN}" "${WGAPIFIXTIMEOUT}" "${ENDPOINT}:${ENPOINTPORT}";;
+          tginit "${TGUSER}" "${TGPASS}" "${WGINTERFACE}" "${WGIFNR}" "${NOHOSTROUTE}" "${LISTENPORT}" "${MTU}" "${FWMARK}" "${KEEPALIVE}" "${DELEGATE}" "${ROUTEALLOWEDIPS}" "${FIREWALLZONE}" "${WGPRIVKEY}" "${BINSOUTDIR}/tgapitest" "${WGAPIFIXTIMEOUT}" "${TGAPIBIN}" "${ENDPOINT}:${ENPOINTPORT}";;
     n|N ) echo "user abort, script finished"; exit;;
     * ) echo "${INVALIDCHOICEMSG1}"; exit;;
   esac
