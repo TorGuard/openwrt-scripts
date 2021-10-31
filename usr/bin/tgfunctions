@@ -677,7 +677,7 @@ do you want to continue (y/n)? " setcred
   esac
     read -p "ℹ️ - By not setting your your custom IP, New York's server will be used as default
 
-Do you want to set custom IP (y/n)? " askserv
+Do you want to set custom IP (y/n)? " askserv;
   case "$askserv" in 
     y|Y ) read -p "Set your server ip address: " setserv;
           uci set torguard.@wireguard_${TGIF}[0].description="TorGuard - Dedicated - ${TGIF}";
