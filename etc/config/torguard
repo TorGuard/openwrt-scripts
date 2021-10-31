@@ -35,13 +35,12 @@ config wireguard_tg0
 	option tgprivkey ''
 	option tgpubkey ''
 	option wgapipubkey ''
-	option apifix '1'
-	option apifixtimeout '60'
+	option apifix '0'
+	option apifixtimeout '1800'
 
 config tgapi_v1
 	option proto 'https'
 	option api_v1 'api/v1/setup?public-key='
-	option pksuffix '%3D'
 
 config specification 'spec_wireguard_proto'
 	list proto 'udp'

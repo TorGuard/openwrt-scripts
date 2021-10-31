@@ -31,13 +31,12 @@ config wireguard_wg0
 	option upgrade '0'
 	option tgprivkey ''
 	option wgapipubkey ''
-	option apifix '1'
-	option apifixtimeout '60'
+	option apifix '0'
+	option apifixtimeout '1800'
 
 config tgapi_v1
 	option proto 'https'
 	option api_v1 'api/v1/setup?public-key='
-	option pksuffix '%
 
 config serverlist
 	option json '/etc/torguard/wireguard.json'
@@ -103,6 +102,10 @@ config specification 'spec_dns_opendns'
 config specification 'spec_dns_quad9'
 	option name 'Quad9'
 	list dns '9.9.9.9'
+
+config specification 'spec_dns_tgvpn'
+	option name 'TorGuard VPN internal DNS'
+	list dns '10.9.0.1,10.8.0.1'
 
 config specification 'spec_proxy_hostnames'
 	list hostname 'proxy.torguard.org'
