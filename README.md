@@ -24,6 +24,7 @@
     - [tguninstall](#tguninstall)
     - [tgupgrade](#tgupgrade)
     - [torguard's wireguard api v1](#torguards-wireguard-api-v1)
+      - [API Syntax](#api-syntax)
       - [API Expiration](#api-expiration)
       - [Validation loop script](#validation-loop-script)
       - [tgapi service](#tgapi-service)
@@ -113,31 +114,36 @@ Only upgrades bins, configs are not enabled, if you want to update configs too, 
 
 Currently only whitelisted/whitelabeled keys work and to get one can be performed in several ways
 
-- dumping the keys/config with TorGuard client on any pc
+- [x] using [TorGuard's wireguard configuration tool](https://torguard.net/tgconf.php?action=vpn-openvpnconfig)
+- [x] dumping the keys/config with TorGuard client on any pc
   
   ```shell
   # show full config of TorGuard client
   wg showconf torguard-wg
   ```
 
-- check your TorGuard clients debug log
-- using TorGuard's wireguard configuration tool
+- [x] check your TorGuard clients debug log
 
-You can use the API manually, retrieve required values with a browser.
+You can use the API manually
 
-Public key for API usage has to be converted first into appropriate format by replacing suffix `=` with `%3D`
+- retrieve required values with a browser.
 
-- Usage:
+  ***Public key for API usage has to be url encoded first.*** (*If you do not know how to url encode, you can use any online tools, [this](https://convertstring.com/EncodeDecode/UrlEncode) one as example.*)
+
+#### API Syntax
 
   ```log
-  https://[USER]:[PASS]@[SERVER]:[PORT]/api/v1/setup?public-key=[YOURPUBLICKEY]`
+  https://[USER]:[PASS]@[SERVER]:[PORT]/api/v1/setup?public-key=[YOURURLENCODEDPUBLICKEY]`
   ```
 
 #### API Expiration
 
-Currently every connection will work for 15 minutes, no disconnect will happen, but after 15 minutes your client will lose ability to connect to the internet. To prevent this, one could either run a cronjob or start a service tgapi which runs by default every 5 minutes ensuring that the config is extended for 15 minutes from the timestamp API call is executed.
-
-- _This does not restrict a user, to run same job/endless loop/... on any other PC as a backup to ensure that config used will never expire._
+- Currently every config will work for 24 hours, ***configs stay valid as long as you stay connected***
+- 24 hours is counted from last handshake timestamp, 
+- in case of reconnect within 24 hours config stays valid and does not need revalidation
+- in case of invalidation, your connected client will have no internet connection and config update is required.
+  - To prevent this, one could either run a cronjob or start a service tgapi which runs by default every 30 minutes ensuring that the config is extended for 15 minutes from the timestamp API call is executed.
+- _run same job/endless loop/... on any other PC as a backup to ensure that config used will never expire._
   _Good example is use with mobile phone where one would be very restricted in keeping connection valid without to lose it. If you use this service on a router and you have ability to run tgapi on some other device, this would ensure that your config never expires._
 - Currently used method by this script is to run the API call which does extend validity period in Torguard's system/backend
 - **If your device already has no internet, running api call would immediately let it work without reconnect or network restart**
@@ -182,9 +188,17 @@ first you need to convert your WG public key into API used formatting
 
 ##### Convert your public key to API format
 
-Scripts encode url with function [urlencode](https://github.com/TorGuard/openwrt-scripts/blob/a09240d8761dbbe4072fbae6761e69373ed4c2b9/usr/bin/tgfunctions#L8) replacing %, space and [other special characters](https://github.com/TorGuard/openwrt-scripts/blob/a09240d8761dbbe4072fbae6761e69373ed4c2b9/usr/bin/tgfunctions#L11-L13).
+First load tgfunctions and then run urlencode
 
-Example with replacing only suffix `=` with `%3D`
+1. load first tgfunctions
+   ```shell
+   . /usr/bin/tgfunctions
+   ```
+1. Urlencode your public key
+   
+   ```shell
+   urlencode "AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJLLL="
+   ```
 
 - Example:
   `AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJLLL=`
@@ -226,7 +240,7 @@ uci show speedperf
   - [x] Pidfile: `/var/run/speedperf_default_client.pid`
   - [x] Storage: `/var/log/speedperf/iperf3`
   - [x] Tests
-    - [x] Repetitions: `10`
+    - [x] Repetitions: `1`
     - [x] normal
     - [x] reverse
     - [x] tcp test
