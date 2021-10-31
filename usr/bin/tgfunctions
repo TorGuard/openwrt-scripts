@@ -178,19 +178,22 @@ setDbin () {
   DBINNOTFOUNDMSG1="NOT FOUND"
   DBINFOUNDCURLMSG1="curl: ${DBINFOUNDMSG1} - ${CURLBIN}"
   DBINFOUNDWGETMSG1="wget: ${DBINFOUNDMSG1} - ${WGETBIN}"
-  if [ -f ${TGCACERT} ]; then
-    echo "Torguard CA found: ${TGCACERT}"
-  else
-    createTgCA && echo "CA created: ${TGCACERT}"
-  fi
   if [ -f ${CURLBIN} ]; then
     echo "${DBINFOUNDCURLMSG1}"
     DBIN="${CURLBIN} -o"
-    DBINAPI="${CURLBIN} --cacert ${TGCACERT}"
+    if [ -f ${TGCACERT} ]; then
+      DBINAPI="${CURLBIN} --cacert ${TGCACERT}"
+    else
+      DBINAPI="${CURLBIN} -k"
+    fi
   elif [ -f ${WGETBIN} ]; then
     echo "${DBINFOUNDWGETMSG1}"
     DBIN="${WGETBIN} -O"
-    DBINAPI="${WGETBIN} --ca-certificate ${TGCACERT} -qO-"
+    if [ -f ${TGCACERT} ]; then
+      DBINAPI="${WGETBIN} --ca-certificate ${TGCACERT} -qO-"
+    else
+      DBINAPI="${WGETBIN} --no-check-certificate -qO-"
+    fi
   else
     echo "curl: ${DBINNOTFOUNDMSG1}"
     echo "wget: ${DBINNOTFOUNDMSG1}"
@@ -307,7 +310,8 @@ APIFIXMSG1="---
 # TGINIT Functions
 getmyipTorGuard () {
 	URL="https://updates.torguard.biz/cgi-bin/whatismyip.pl"
-	MYIPADDRESS=$(${DBIN} ${URL})
+  ${DBIN} /tmp/torguardip ${URL}
+  MYIPADDRESS=$(cat /tmp/torguardip)
 }
 
 # Wireguarrd key generation
