@@ -5,6 +5,25 @@ restartNetwork () {
   /etc/init.d/network restart
 }
 
+urlencode() {
+  echo "$@" | awk -v ORS="" '{ gsub(/./,"&\n") ; print }' | while read l
+  do
+    c="`echo "$l" | grep '[^-._~0-9a-zA-Z]'`"
+    if [ "$l" == "" ]
+    then
+      echo -n "%20"
+    else
+      if [ -z "$c" ]
+      then
+        echo -n "$l"
+      else
+        printf %%%02X \'"$c"
+      fi
+    fi
+  done
+  echo ""
+}
+
 preinitchecks () {
   SETTINGSMSG1="### SETTINGS ###
 Unattended install:             ${question}
