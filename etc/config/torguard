@@ -105,6 +105,10 @@ config specification 'spec_dns_quad9'
 	option name 'Quad9'
 	list dns '9.9.9.9'
 
+config specification 'spec_dns_tgvpn'
+	option name 'TorGuard VPN internal DNS'
+	list dns '10.9.0.1,10.8.0.1'
+
 config specification 'spec_proxy_hostnames'
 	list hostname 'proxy.torguard.org'
 	list hostname 'proxy.torguard.io'
