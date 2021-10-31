@@ -20,6 +20,7 @@ config interface_tg0
 	option fwmark '0xFE'
 	option delegate '0'
 	option nohostroute '0'
+	list addresses '172.16.1.1/24'
 
 config wireguard_tg0
 	option description 'TorGuard - United States (New York)'
@@ -37,7 +38,6 @@ config wireguard_tg0
 	option wgapipubkey ''
 	option apifix '0'
 	option apifixtimeout '1800'
-	list addresses '172.16.1.1/24'
 
 config tgapi_v1
 	option proto 'https'
