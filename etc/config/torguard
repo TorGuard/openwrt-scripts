@@ -3,8 +3,8 @@ config serverlist
 	option json '/etc/torguard/wireguard.json'
 
 config torguard 'tg0'
-	option ifname='wg'
-	option ifstartnr='0'
+	option ifname 'wg'
+	option ifstartnr '0'
 	option zone '1'
 
 config credentials_tg0
