@@ -37,6 +37,7 @@ config wireguard_tg0
 	option wgapipubkey ''
 	option apifix '0'
 	option apifixtimeout '1800'
+	list addresses '172.16.1.1/24'
 
 config tgapi_v1
 	option proto 'https'
