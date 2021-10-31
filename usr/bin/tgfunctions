@@ -289,11 +289,15 @@ APIFIXTIMEOUTMSG1="Set time Examples:
                or 24h
                or 1d"
 APIFIXMSG1="---
-ℹ️ APIFIX Info
+ℹ️ APIFIX Info (obosolete, 
+- ℹ️ obosolete
+  TorGuard connection does not expire when connected.
+  Use only if you are not permanently connected
+  to torguard server
 - If you use server with connection expiration,
   then you need to use API fix because connection
   requires to validate within specific time, if
-  you do not know, recommended is to enable API fix
+  you do not know, recommended is to disable API fix
 - if you enable apifix, you can change deault timeout
 ---"
 }
@@ -699,6 +703,7 @@ Do you want to set custom IP (y/n)? " askserv
   esac
   read -p "${APIFIXMSG1}
 
+(API fix is disabled per default)
 Do you want to use API fix for connection expiration (y/n)? " askapifix
   case "$askapifix" in 
     y|Y ) uci set torguard.@wireguard_${TGIF}[0].apifix='1';uci commit torguard;;
@@ -706,7 +711,7 @@ Do you want to use API fix for connection expiration (y/n)? " askapifix
     * ) echo "${INVALIDCHOICEMSG1}"; exit ;;
   esac
   read -p "${APIFIXTIMEOUTMSG1}
-Default apifixtimeout: 1m
+Default apifixtimeout: 30m
 
 Please set apifixtimeout: " setapifixtimeout;
 uci set torguard.@wireguard_${TGIF}[0].apifixtimeout="${setapifixtimeout}";uci commit torguard
@@ -757,8 +762,8 @@ tgInitUciBasic () {
   uci set torguard.@wireguard_${TGIF}[-1].tgprivkey="${PRIVATE}"
   uci set torguard.@wireguard_${TGIF}[-1].wgapipubkey="${APIPUBKEY}"
   uci set torguard.@wireguard_${TGIF}[-1].upgrade='0'
-  uci set torguard.@wireguard_${TGIF}[-1].apifix='1'
-  uci set torguard.@wireguard_${TGIF}[-1].apifixtimeout='1m'
+  uci set torguard.@wireguard_${TGIF}[-1].apifix='0'
+  uci set torguard.@wireguard_${TGIF}[-1].apifixtimeout='30m'
 
   # save changes
   uci commit torguard
