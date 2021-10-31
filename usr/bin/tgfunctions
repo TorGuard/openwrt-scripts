@@ -266,7 +266,7 @@ getmyipTorGuard () {
 
 # Wireguarrd key generation
 apiformatpubkey () {
-	APIPUBKEY=$(echo "${PUBLIC}" | sed 's/=/%3D/') && echo "apiformatpubkey... formating api public key ... OK: ${APIPUBKEY}"
+	APIPUBKEY=$(urlencode "${PUBLIC}") && echo "apiformatpubkey... formating api public key ... OK: ${APIPUBKEY}"
 }
 
 createwgpubkey () {
